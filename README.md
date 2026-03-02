@@ -1,73 +1,137 @@
-# React + TypeScript + Vite
+# Skills Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Desktop app for managing AI agent skills in one place.
 
-Currently, two official plugins are available:
+[中文说明](./README.zh-CN.md)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## What It Does
 
-## React Compiler
+Skills Manager is a Tauri desktop application for collecting, organizing, and syncing skill packs across multiple AI coding tools. It keeps a central local repository under `~/.skills-manager`, tracks installed skills in SQLite, and lets you enable different skill sets through scenarios.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Current capabilities implemented in this repo:
 
-## Expanding the ESLint configuration
+- Install skills from local folders, `.zip` / `.skill` files, Git repositories, and the `skills.sh` marketplace
+- Scan existing tool skill directories and import discovered skills into the central repository
+- Sync or unsync skills to supported tools using symlinks or copies
+- Group skills into scenarios and switch the active scenario
+- Check for updates for Git-based skills and refresh imported/local skills
+- Preview a skill document from `SKILL.md`, `README.md`, or similar files
+- Manage app settings including language, theme, default scenario, and sync mode
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Supported Tools
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+The app currently knows how to detect and sync skills for:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Cursor
+- Claude Code
+- Codex
+- OpenCode
+- Antigravity
+- Amp
+- Kilo Code
+- Roo Code
+- Goose
+- Gemini CLI
+- GitHub Copilot
+- Clawdbot
+- Droid
+- Windsurf
+- TRAE IDE
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Tool detection is based on whether the corresponding home-directory config folder exists.
+
+## How It Works
+
+Skills are normalized into a central local repository:
+
+- Central repo: `~/.skills-manager`
+- Managed skills: `~/.skills-manager/skills`
+- Scenario metadata: `~/.skills-manager/scenarios`
+- Cache and logs: `~/.skills-manager/cache`, `~/.skills-manager/logs`
+- Database: `~/.skills-manager/skills-manager.db`
+
+When you sync a skill to a tool, the app writes the skill into that tool's skill directory, either by symlink or by copy, depending on settings and tool compatibility.
+
+## Tech Stack
+
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS
+- Desktop shell: Tauri 2
+- Backend: Rust
+- Storage: SQLite via `rusqlite`
+- Localization: `react-i18next`
+
+## Project Structure
+
+```text
+.
+├── src/                # React frontend
+├── src-tauri/          # Tauri + Rust backend
+├── public/             # Static assets
+├── docs/               # Extra notes/assets
+└── README.zh-CN.md     # Chinese README
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Node.js 18+
+- npm
+- Rust toolchain
+- Tauri system dependencies for your OS
+
+On macOS, this project targets the normal Tauri desktop workflow.
+
+### Install Dependencies
+
+```bash
+npm install
 ```
+
+### Run In Development
+
+```bash
+npm run tauri:dev
+```
+
+If you only need the frontend:
+
+```bash
+npm run dev
+```
+
+### Build
+
+```bash
+npm run tauri:build
+```
+
+Frontend-only build:
+
+```bash
+npm run build
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Main Screens
+
+- Dashboard: active scenario, synced skill count, supported tool status
+- My Skills: browse managed skills, toggle scenario membership, sync/unsync, update, delete
+- Install Skills: browse `skills.sh`, install from Git, install local sources, scan/import existing skills
+- Settings: tool detection, central repo access, sync mode, theme, language, active/default scenario
+
+## Notes
+
+- Local and imported skills are marked as `local_only` and can be re-imported rather than Git-updated.
+- Git and `skills.sh` installs keep source metadata so update checks can compare revisions.
+- On startup, the app restores the preferred default scenario when available and syncs that scenario's skills.
+- An older `~/.agent-skills` directory is migrated to `~/.skills-manager` if present.
+
+## License
+
+MIT

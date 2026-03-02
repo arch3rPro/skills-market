@@ -133,7 +133,7 @@
   },
   "install": {
     "title": "Install Skills",
-    "browseMarket": "Browse Market",
+    "browseMarket": "Leaderboard",
     "localInstall": "Local Install",
     "gitInstall": "Git Install",
     "hot": "Hot",
@@ -141,15 +141,15 @@
     "all": "All Time",
     "searchMarket": "Search skills.sh market...",
     "marketMode": {
-      "hot": "Browsing the hot leaderboard",
-      "trending": "Browsing trending skills",
-      "alltime": "Browsing the all-time leaderboard",
+      "hot": "Viewing the hot leaderboard",
+      "trending": "Viewing trending leaderboard",
+      "alltime": "Viewing the all-time leaderboard",
       "search": "Searching for \"{{query}}\""
     },
     "filters": {
       "source": "Source",
       "allSources": "All sources",
-      "filteredCount": "{{count}} results right now"
+      "filteredCount": "{{count}} loaded results"
     },
     "noResults": {
       "title": "No matching market skills",
@@ -163,6 +163,8 @@
       "previous": "Previous",
       "next": "Next"
     },
+    "loadMoreSearch": "Load more results",
+    "loadingMore": "Loading more...",
     "installing": "Installing...",
     "local": {
       "title": "Import a local skill source",

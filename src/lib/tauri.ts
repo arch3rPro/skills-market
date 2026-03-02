@@ -147,8 +147,11 @@ export const importAllDiscovered = () =>
 export const fetchLeaderboard = (board: string) =>
   invoke<SkillsShSkill[]>("fetch_leaderboard", { board });
 
-export const searchSkillssh = (query: string) =>
-  invoke<SkillsShSkill[]>("search_skillssh", { query });
+export const searchSkillssh = (query: string, limit?: number) =>
+  invoke<SkillsShSkill[]>("search_skillssh", {
+    query,
+    limit: limit ?? null,
+  });
 
 // ── Settings ──
 

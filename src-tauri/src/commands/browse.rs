@@ -34,6 +34,8 @@ pub fn fetch_leaderboard(
 }
 
 #[tauri::command]
-pub fn search_skillssh(query: String) -> Result<Vec<SkillsShSkill>, String> {
-    skillssh_api::search_skills(&query, 50).map_err(|e| e.to_string())
+pub fn search_skillssh(query: String, limit: Option<usize>) -> Result<Vec<SkillsShSkill>, String> {
+    let requested = limit.unwrap_or(60);
+    let bounded = requested.clamp(1, 300);
+    skillssh_api::search_skills(&query, bounded).map_err(|e| e.to_string())
 }

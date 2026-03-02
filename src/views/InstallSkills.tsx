@@ -30,6 +30,7 @@ import { useSearchParams } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
 
 const MARKET_PAGE_SIZE = 24;
+const MARKET_SEARCH_STEP = 60;
 
 export function InstallSkills() {
   const { t } = useTranslation();
@@ -41,7 +42,9 @@ export function InstallSkills() {
   const [marketSourceFilter, setMarketSourceFilter] = useState("all");
   const [marketSkills, setMarketSkills] = useState<SkillsShSkill[]>([]);
   const [marketPage, setMarketPage] = useState(1);
+  const [marketSearchLimit, setMarketSearchLimit] = useState(MARKET_SEARCH_STEP);
   const [marketLoading, setMarketLoading] = useState(false);
+  const [marketLoadingMore, setMarketLoadingMore] = useState(false);
   const [marketError, setMarketError] = useState<string | null>(null);
   const [marketReloadKey, setMarketReloadKey] = useState(0);
   const [installing, setInstalling] = useState<string | null>(null);
@@ -88,18 +91,24 @@ export function InstallSkills() {
     if (activeTab !== "market") return;
 
     const query = deferredMarketQuery.trim();
+    const loadingMore = query.length > 0 && marketSkills.length > 0 && marketSearchLimit > marketSkills.length;
+    setMarketLoadingMore(loadingMore);
     setMarketLoading(true);
-    setMarketPage(1);
+    if (!loadingMore) {
+      setMarketPage(1);
+    }
     setMarketError(null);
 
     const request = query
-      ? api.searchSkillssh(query)
+      ? api.searchSkillssh(query, marketSearchLimit)
       : api.fetchLeaderboard(marketTab);
 
     request
       .then((result) => {
         setMarketSkills(result);
-        setMarketSourceFilter("all");
+        if (!loadingMore) {
+          setMarketSourceFilter("all");
+        }
       })
       .catch((e) => {
         console.error(e);
@@ -107,8 +116,11 @@ export function InstallSkills() {
         setMarketError(message);
         toast.error(message);
       })
-      .finally(() => setMarketLoading(false));
-  }, [activeTab, deferredMarketQuery, marketReloadKey, marketTab, t]);
+      .finally(() => {
+        setMarketLoading(false);
+        setMarketLoadingMore(false);
+      });
+  }, [activeTab, deferredMarketQuery, marketReloadKey, marketSearchLimit, marketTab, t]);
 
   useEffect(() => {
     if (activeTab === "local" && !scanResult && !scanLoading) {
@@ -249,6 +261,8 @@ export function InstallSkills() {
     return Math.abs(page - currentMarketPage) <= 1;
   });
   const hasMarketQuery = deferredMarketQuery.trim().length > 0;
+  const canLoadMoreSearch = hasMarketQuery && marketSkills.length >= marketSearchLimit;
+  const isLoadingMoreSearch = hasMarketQuery && marketLoadingMore;
 
   return (
     <div className="h-full max-w-[1200px] animate-in fade-in duration-400">
@@ -337,7 +351,10 @@ export function InstallSkills() {
                     <input
                       type="text"
                       value={marketQuery}
-                      onChange={(event) => setMarketQuery(event.target.value)}
+                      onChange={(event) => {
+                        setMarketQuery(event.target.value);
+                        setMarketSearchLimit(MARKET_SEARCH_STEP);
+                      }}
                       placeholder={t("install.searchMarket")}
                       className="h-[38px] w-full rounded-[6px] border border-border-subtle bg-background pl-9 pr-3 text-[13px] text-secondary outline-none transition-colors placeholder:text-faint focus:border-border"
                     />
@@ -399,7 +416,7 @@ export function InstallSkills() {
             </div>
           ) : null}
 
-          {marketLoading ? (
+          {marketLoading && !marketLoadingMore ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-5 w-5 animate-spin text-muted" />
             </div>
@@ -520,6 +537,26 @@ export function InstallSkills() {
                       >
                         {t("install.pagination.next")}
                         <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {hasMarketQuery ? (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setMarketSearchLimit((value) => value + MARKET_SEARCH_STEP)}
+                        disabled={!canLoadMoreSearch || marketLoading}
+                        className="inline-flex items-center gap-2 rounded-[6px] border border-border-subtle bg-surface px-3.5 py-2 text-[11px] font-medium text-secondary transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {marketLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Search className="h-3.5 w-3.5" />
+                        )}
+                        {isLoadingMoreSearch
+                          ? t("install.loadingMore")
+                          : t("install.loadMoreSearch")}
                       </button>
                     </div>
                   ) : null}
