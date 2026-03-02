@@ -44,7 +44,7 @@ pub fn fetch_leaderboard(board: LeaderboardType) -> Result<Vec<SkillsShSkill>> {
 
     let html = client
         .get(board.url())
-        .header("User-Agent", "skills-manager/0.1.0")
+        .header("User-Agent", "skills-manager/1.0.0")
         .send()
         .context("Failed to fetch skills.sh")?
         .text()
@@ -218,7 +218,7 @@ pub fn search_skills(query: &str, limit: usize) -> Result<Vec<SkillsShSkill>> {
 
     let resp: serde_json::Value = client
         .get(&url)
-        .header("User-Agent", "skills-manager/0.1.0")
+        .header("User-Agent", "skills-manager/1.0.0")
         .send()
         .context("Failed to search skills.sh")?
         .json()
