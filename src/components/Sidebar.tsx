@@ -111,13 +111,13 @@ export function Sidebar() {
         {/* Traffic-light safe zone */}
         <div className="h-[38px] shrink-0" />
         {/* App logo — sits below macOS window controls */}
-        <div className="flex items-center px-3 gap-2.5 pb-2 shrink-0">
+        <div className="flex items-center px-3 gap-3 pb-2.5 shrink-0">
           <img
             src="/icons/32x32.png"
             alt="logo"
-            className="w-[20px] h-[20px] shrink-0"
+            className="w-[24px] h-[24px] shrink-0"
           />
-          <span className="text-[14px] font-semibold text-secondary tracking-tight truncate leading-[20px]">
+          <span className="text-[16px] font-semibold text-secondary tracking-tight truncate leading-[22px]">
             {t("app.name")}
           </span>
         </div>
