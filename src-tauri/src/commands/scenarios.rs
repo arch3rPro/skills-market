@@ -209,29 +209,27 @@ pub async fn add_skill_to_scenario(
         // If this is the active scenario, sync the skill
         if let Ok(Some(active_id)) = store.get_active_scenario_id() {
             if active_id == scenario_id {
-                // Sync to all installed tools
-                let adapters = tool_adapters::default_tool_adapters();
+                // Sync to all enabled installed tools
+                let adapters = tool_adapters::enabled_installed_adapters(&store);
                 let configured_mode = store.get_setting("sync_mode").map_err(AppError::db)?;
                 if let Ok(Some(skill)) = store.get_skill_by_id(&skill_id) {
                     let source = PathBuf::from(&skill.central_path);
                     for adapter in &adapters {
-                        if adapter.is_installed() {
-                            let target = adapter.skills_dir().join(&skill.name);
-                            let mode = sync_engine::sync_mode_for_tool(&adapter.key, configured_mode.as_deref());
-                            if sync_engine::sync_skill(&source, &target, mode).is_ok() {
-                                let now = chrono::Utc::now().timestamp_millis();
-                                let target_record = crate::core::skill_store::SkillTargetRecord {
-                                    id: uuid::Uuid::new_v4().to_string(),
-                                    skill_id: skill_id.clone(),
-                                    tool: adapter.key.clone(),
-                                    target_path: target.to_string_lossy().to_string(),
-                                    mode: mode.as_str().to_string(),
-                                    status: "ok".to_string(),
-                                    synced_at: Some(now),
-                                    last_error: None,
-                                };
-                                store.insert_target(&target_record).ok();
-                            }
+                        let target = adapter.skills_dir().join(&skill.name);
+                        let mode = sync_engine::sync_mode_for_tool(&adapter.key, configured_mode.as_deref());
+                        if sync_engine::sync_skill(&source, &target, mode).is_ok() {
+                            let now = chrono::Utc::now().timestamp_millis();
+                            let target_record = crate::core::skill_store::SkillTargetRecord {
+                                id: uuid::Uuid::new_v4().to_string(),
+                                skill_id: skill_id.clone(),
+                                tool: adapter.key.clone(),
+                                target_path: target.to_string_lossy().to_string(),
+                                mode: mode.as_str().to_string(),
+                                status: "ok".to_string(),
+                                synced_at: Some(now),
+                                last_error: None,
+                            };
+                            store.insert_target(&target_record).ok();
                         }
                     }
                 }
@@ -304,15 +302,12 @@ pub(crate) fn sync_scenario_skills(store: &SkillStore, scenario_id: &str) -> Res
     let skills = store
         .get_skills_for_scenario(scenario_id)
         .map_err(AppError::db)?;
-    let adapters = tool_adapters::default_tool_adapters();
+    let adapters = tool_adapters::enabled_installed_adapters(store);
     let configured_mode = store.get_setting("sync_mode").map_err(AppError::db)?;
 
     for skill in &skills {
         let source = PathBuf::from(&skill.central_path);
         for adapter in &adapters {
-            if !adapter.is_installed() {
-                continue;
-            }
             let target = adapter.skills_dir().join(&skill.name);
             let mode = sync_engine::sync_mode_for_tool(&adapter.key, configured_mode.as_deref());
             if let Ok(actual_mode) = sync_engine::sync_skill(&source, &target, mode) {

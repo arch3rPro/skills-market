@@ -33,6 +33,7 @@ const IS_WINDOWS = navigator.userAgent.includes("Windows");
 export function Settings() {
   const { t, i18n } = useTranslation();
   const { tools, scenarios, refreshTools, openHelp } = useApp();
+  const [togglingTools, setTogglingTools] = useState<Set<string>>(new Set());
   const { theme, setTheme } = useThemeContext();
   const [syncMode, setSyncMode] = useState("symlink");
   const [defaultScenario, setDefaultScenario] = useState("");
@@ -74,6 +75,32 @@ export function Settings() {
     await refreshTools();
     setRefreshing(false);
     toast.success(t("common.success"));
+  };
+
+  const handleToggleTool = async (key: string, enabled: boolean) => {
+    setTogglingTools((prev) => new Set(prev).add(key));
+    try {
+      await api.setToolEnabled(key, enabled);
+      await refreshTools();
+    } catch {
+      toast.error(t("common.error"));
+    } finally {
+      setTogglingTools((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  };
+
+  const handleToggleAllTools = async (enabled: boolean) => {
+    try {
+      await api.setAllToolsEnabled(enabled);
+      await refreshTools();
+      toast.success(t("common.success"));
+    } catch {
+      toast.error(t("common.error"));
+    }
   };
 
   const handleSyncModeChange = async (mode: string) => {
@@ -199,18 +226,32 @@ export function Settings() {
             <h2 className="app-section-title">
               {t("settings.supportedAgents")} ({tools.filter((t) => t.installed).length}/{tools.length})
             </h2>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 text-[13px] text-accent hover:text-accent-light transition-colors font-medium outline-none"
-            >
-              {refreshing ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="w-3.5 h-3.5" />
-              )}
-              {t("settings.refresh")}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleToggleAllTools(true)}
+                className="text-[13px] text-accent hover:text-accent-light transition-colors font-medium outline-none"
+              >
+                {t("settings.enableAll")}
+              </button>
+              <button
+                onClick={() => handleToggleAllTools(false)}
+                className="text-[13px] text-muted hover:text-secondary transition-colors font-medium outline-none"
+              >
+                {t("settings.disableAll")}
+              </button>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-1.5 text-[13px] text-accent hover:text-accent-light transition-colors font-medium outline-none"
+              >
+                {refreshing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                {t("settings.refresh")}
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-2 md:grid-cols-4">
             {tools.map((agent, i) => (
@@ -218,18 +259,31 @@ export function Settings() {
                 key={i}
                 className={cn(
                   "flex items-center gap-2 p-2.5 rounded-[4px] border transition-colors",
-                  agent.installed
+                  agent.installed && agent.enabled
                     ? "bg-surface border-border-subtle hover:border-border"
                     : "bg-bg-secondary border-border-subtle opacity-50"
                 )}
               >
                 {agent.installed ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <button
+                    onClick={() => handleToggleTool(agent.key, !agent.enabled)}
+                    disabled={togglingTools.has(agent.key)}
+                    className="shrink-0 outline-none"
+                    title={agent.enabled ? t("settings.disableAgent") : t("settings.enableAgent")}
+                  >
+                    {togglingTools.has(agent.key) ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted" />
+                    ) : agent.enabled ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Circle className="w-3.5 h-3.5 text-muted" />
+                    )}
+                  </button>
                 ) : (
                   <Circle className="w-3.5 h-3.5 text-faint shrink-0" />
                 )}
                 <div className="min-w-0">
-                  <h3 className={cn("text-[13px] font-medium truncate", agent.installed ? "text-secondary" : "text-muted")}>
+                  <h3 className={cn("text-[13px] font-medium truncate", agent.installed && agent.enabled ? "text-secondary" : "text-muted")}>
                     {agent.display_name}
                   </h3>
                   <p className="text-[13px] text-muted truncate" title={agent.skills_dir}>

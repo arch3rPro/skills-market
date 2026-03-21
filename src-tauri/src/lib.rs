@@ -45,6 +45,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             // Tools
             commands::tools::get_tool_status,
+            commands::tools::set_tool_enabled,
+            commands::tools::set_all_tools_enabled,
             // Skills
             commands::skills::get_managed_skills,
             commands::skills::get_skills_for_scenario,

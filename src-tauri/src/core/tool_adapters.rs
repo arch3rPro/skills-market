@@ -147,3 +147,17 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
 pub fn find_adapter(key: &str) -> Option<ToolAdapter> {
     default_tool_adapters().into_iter().find(|a| a.key == key)
 }
+
+/// Returns adapters that are installed and not in the disabled list.
+pub fn enabled_installed_adapters(store: &crate::core::skill_store::SkillStore) -> Vec<ToolAdapter> {
+    let disabled: Vec<String> = store
+        .get_setting("disabled_tools")
+        .ok()
+        .flatten()
+        .and_then(|v| serde_json::from_str(&v).ok())
+        .unwrap_or_default();
+    default_tool_adapters()
+        .into_iter()
+        .filter(|a| a.is_installed() && !disabled.contains(&a.key))
+        .collect()
+}

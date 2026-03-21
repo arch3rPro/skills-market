@@ -7,6 +7,7 @@ export interface ToolInfo {
   display_name: string;
   installed: boolean;
   skills_dir: string;
+  enabled: boolean;
 }
 
 export interface ManagedSkill {
@@ -110,6 +111,12 @@ export interface ProjectSkillDocument {
 // ── Tools ──
 
 export const getToolStatus = () => invoke<ToolInfo[]>("get_tool_status");
+
+export const setToolEnabled = (key: string, enabled: boolean) =>
+  invoke<void>("set_tool_enabled", { key, enabled });
+
+export const setAllToolsEnabled = (enabled: boolean) =>
+  invoke<void>("set_all_tools_enabled", { enabled });
 
 // ── Skills ──
 

@@ -24,6 +24,17 @@ pub async fn sync_skill_to_tool(
             return Err(AppError::not_found(format!("{} is not installed", adapter.display_name)));
         }
 
+        // Reject sync to disabled tools
+        let disabled: Vec<String> = store
+            .get_setting("disabled_tools")
+            .ok()
+            .flatten()
+            .and_then(|v| serde_json::from_str(&v).ok())
+            .unwrap_or_default();
+        if disabled.contains(&tool) {
+            return Err(AppError::invalid_input(format!("{} is disabled", adapter.display_name)));
+        }
+
         let skill = store
             .get_skill_by_id(&skill_id)
             .map_err(AppError::db)?

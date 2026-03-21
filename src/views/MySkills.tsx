@@ -78,7 +78,7 @@ export function MySkills() {
   const [tagInput, setTagInput] = useState("");
   const tagInputRef = useRef<HTMLInputElement>(null);
 
-  const installedTools = tools.filter((tool) => tool.installed);
+  const installedTools = tools.filter((tool) => tool.installed && tool.enabled);
   const activeScenarioName = activeScenario?.name || t("mySkills.currentScenarioFallback");
 
   const refreshAllTags = async () => {
