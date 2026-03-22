@@ -1,4 +1,5 @@
 pub mod central_repo;
+pub mod crypto;
 pub mod error;
 pub mod content_hash;
 pub mod migrations;

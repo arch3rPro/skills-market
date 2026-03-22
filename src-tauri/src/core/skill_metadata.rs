@@ -61,11 +61,36 @@ pub fn is_valid_skill_dir(dir: &Path) -> bool {
     dir.is_dir() && SKILL_DIR_MARKERS.iter().any(|name| dir.join(name).exists())
 }
 
+/// Sanitize a skill name so it is safe to use as a single directory component.
+/// Strips path separators and `..` traversal, removes control characters.
+/// Returns `None` if the result would be empty or unsafe.
+pub fn sanitize_skill_name(name: &str) -> Option<String> {
+    // Take only the last path component — strips any leading `../` sequences.
+    let last = std::path::Path::new(name)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())?;
+
+    // Reject bare `.` and `..` (file_name() returns None for `..` on most
+    // platforms, but be explicit for cross-platform safety).
+    if last == ".." || last == "." {
+        return None;
+    }
+
+    // Remove NUL bytes and other control characters.
+    let clean: String = last.chars().filter(|c| !c.is_control()).collect();
+
+    if clean.is_empty() {
+        None
+    } else {
+        Some(clean)
+    }
+}
+
 pub fn infer_skill_name(dir: &Path) -> String {
     let meta = parse_skill_md(dir);
     if let Some(name) = meta.name {
-        if !name.is_empty() {
-            return name;
+        if let Some(sanitized) = sanitize_skill_name(&name) {
+            return sanitized;
         }
     }
     dir.file_name()
