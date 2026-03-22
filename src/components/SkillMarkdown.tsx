@@ -46,7 +46,8 @@ export function SkillMarkdown({ content, className }: SkillMarkdownProps) {
             <p className={cn("mb-4 text-[13px] leading-6 text-secondary", className)} {...props} />
           ),
           a: ({ className, href, ...props }) => {
-            const safeHref = href && /^https?:\/\//.test(href) ? href : undefined;
+            const dangerous = /^(javascript|vbscript|data):/i;
+            const safeHref = href && !dangerous.test(href.trim()) ? href : undefined;
             return (
               <a
                 className={cn("text-accent-light underline decoration-accent-border underline-offset-4", className)}

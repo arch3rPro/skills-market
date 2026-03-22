@@ -42,15 +42,44 @@ pub fn parse_git_source(url: &str) -> ParsedGitSource {
 }
 
 /// Validate that a URL uses an allowed scheme for git operations.
-/// Rejects `file://` and other potentially dangerous schemes.
+/// Only permits `https://`, `http://`, `ssh://`, and SCP-style `git@` URLs,
+/// plus shorthand like `user/repo` (no scheme). Rejects everything else
+/// including `file://`, `ext::`, bare local paths, and UNC paths.
 pub fn validate_git_url(url: &str) -> Result<()> {
     let trimmed = url.trim();
-    if trimmed.starts_with("file://") || trimmed.starts_with("file:") {
-        anyhow::bail!("file:// URLs are not allowed for security reasons");
+    let lower = trimmed.to_lowercase();
+
+    // Explicitly allowed schemes
+    if lower.starts_with("https://")
+        || lower.starts_with("http://")
+        || lower.starts_with("ssh://")
+        || lower.starts_with("git@")
+    {
+        return Ok(());
     }
-    // Allow https://, http://, git@, ssh://
-    // Also allow shorthand like "user/repo" (no scheme)
-    Ok(())
+
+    // Allow GitHub/GitLab shorthand like "user/repo" or "user/repo.git"
+    // Must contain exactly one '/', no scheme separator, no backslash,
+    // and must not look like a Windows absolute path (e.g. "C:\repo").
+    if !trimmed.contains("://")
+        && !trimmed.contains('\\')
+        && !trimmed.starts_with('/')
+        && !trimmed.starts_with('.')
+        && !trimmed.starts_with('~')
+        && trimmed.contains('/')
+    {
+        // Reject Windows drive letters like "C:/repo"
+        let bytes = trimmed.as_bytes();
+        let is_windows_path =
+            bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':';
+        if !is_windows_path {
+            return Ok(());
+        }
+    }
+
+    anyhow::bail!(
+        "URL scheme not allowed: only https, http, ssh, and git@ are permitted"
+    );
 }
 
 pub fn clone_repo_ref(
