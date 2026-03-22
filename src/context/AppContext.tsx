@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { listen } from "@tauri-apps/api/event";
 import type { ManagedSkill, Project, Scenario, ToolInfo } from "../lib/tauri";
 import * as api from "../lib/tauri";
 import i18n from "../i18n";
@@ -116,6 +117,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     init();
   }, [refreshAppData]);
+
+  useEffect(() => {
+    const unlistenPromise = listen<string>("tray-scenario-switched", async () => {
+      await Promise.all([refreshScenarios(), refreshManagedSkills()]);
+    });
+
+    return () => {
+      unlistenPromise
+        .then((unlisten) => unlisten())
+        .catch((error) => {
+          console.error("Failed to unlisten tray-scenario-switched:", error);
+        });
+    };
+  }, [refreshManagedSkills, refreshScenarios]);
 
   return (
     <AppContext.Provider

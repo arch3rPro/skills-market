@@ -8,6 +8,7 @@ mod core;
 /// Shared flag: when true, CloseRequested should NOT be prevented.
 pub static QUITTING: AtomicBool = AtomicBool::new(false);
 const MAIN_TRAY_ID: &str = "main-tray";
+const TRAY_SCENARIO_ITEM_PREFIX: &str = "tray-scenario:";
 const CUSTOM_TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/tray/tray-icon-32.png");
 
 fn parse_bool_setting(value: Option<String>, default: bool) -> bool {
@@ -69,8 +70,8 @@ fn request_quit(app: &tauri::AppHandle) {
 }
 
 fn load_custom_tray_icon() -> Option<tauri::image::Image<'static>> {
-    let img =
-        image::load_from_memory_with_format(CUSTOM_TRAY_ICON_BYTES, image::ImageFormat::Png).ok()?;
+    let img = image::load_from_memory_with_format(CUSTOM_TRAY_ICON_BYTES, image::ImageFormat::Png)
+        .ok()?;
     let rgba = img.to_rgba8();
     let (width, height) = rgba.dimensions();
     Some(tauri::image::Image::new_owned(
@@ -80,17 +81,135 @@ fn load_custom_tray_icon() -> Option<tauri::image::Image<'static>> {
     ))
 }
 
+fn tray_scenario_item_id(scenario_id: &str) -> String {
+    format!("{TRAY_SCENARIO_ITEM_PREFIX}{scenario_id}")
+}
+
+fn scenario_id_from_tray_item(menu_id: &str) -> Option<&str> {
+    menu_id.strip_prefix(TRAY_SCENARIO_ITEM_PREFIX)
+}
+
+fn build_tray_menu<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    store: &Arc<core::skill_store::SkillStore>,
+) -> tauri::Result<tauri::menu::Menu<R>> {
+    use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
+
+    let menu = Menu::new(app)?;
+    let app_name = MenuItem::with_id(app, "tray-app-name", "Skills Manager", false, None::<&str>)?;
+    menu.append(&app_name)?;
+
+    let active_id = store.get_active_scenario_id().ok().flatten();
+    let scenarios = store.get_all_scenarios().unwrap_or_default();
+    let active_name = active_id.as_deref().and_then(|id| {
+        scenarios
+            .iter()
+            .find(|scenario| scenario.id == id)
+            .map(|scenario| scenario.name.as_str())
+    });
+    let active_label = MenuItem::with_id(
+        app,
+        "tray-active-scenario",
+        format!("Current: {}", active_name.unwrap_or("None")),
+        false,
+        None::<&str>,
+    )?;
+    menu.append(&active_label)?;
+
+    let first_separator = PredefinedMenuItem::separator(app)?;
+    menu.append(&first_separator)?;
+
+    let scenario_submenu = Submenu::new(app, "Switch Scenario", true)?;
+    if scenarios.is_empty() {
+        let empty_item = MenuItem::with_id(
+            app,
+            "tray-no-scenarios",
+            "No scenarios",
+            false,
+            None::<&str>,
+        )?;
+        scenario_submenu.append(&empty_item)?;
+    } else {
+        for scenario in scenarios {
+            let checked = active_id.as_deref() == Some(scenario.id.as_str());
+            let skill_count = store.count_skills_for_scenario(&scenario.id).unwrap_or(0);
+            let label = format!("{} ({skill_count})", scenario.name);
+            let scenario_item = CheckMenuItem::with_id(
+                app,
+                tray_scenario_item_id(&scenario.id),
+                label,
+                true,
+                checked,
+                None::<&str>,
+            )?;
+            scenario_submenu.append(&scenario_item)?;
+        }
+    }
+    menu.append(&scenario_submenu)?;
+
+    let second_separator = PredefinedMenuItem::separator(app)?;
+    menu.append(&second_separator)?;
+
+    let show_item = MenuItem::with_id(app, "show", "Open Skills Manager", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    menu.append(&show_item)?;
+    menu.append(&quit_item)?;
+
+    Ok(menu)
+}
+
+fn refresh_tray_menu<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<(), String> {
+    let Some(tray) = app.tray_by_id(MAIN_TRAY_ID) else {
+        return Ok(());
+    };
+    let store = app
+        .state::<Arc<core::skill_store::SkillStore>>()
+        .inner()
+        .clone();
+    let menu = build_tray_menu(app, &store).map_err(|e| e.to_string())?;
+    tray.set_menu(Some(menu)).map_err(|e| e.to_string())
+}
+
+fn switch_scenario_from_tray<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    scenario_id: &str,
+) -> Result<(), String> {
+    let store = app
+        .state::<Arc<core::skill_store::SkillStore>>()
+        .inner()
+        .clone();
+
+    let current_active = store.get_active_scenario_id().map_err(|e| e.to_string())?;
+    if current_active.as_deref() == Some(scenario_id) {
+        return Ok(());
+    }
+
+    if let Some(old_id) = current_active.as_deref() {
+        commands::scenarios::unsync_scenario_skills(&store, old_id).map_err(|e| e.to_string())?;
+    }
+
+    store
+        .set_active_scenario(scenario_id)
+        .map_err(|e| e.to_string())?;
+    commands::scenarios::sync_scenario_skills(&store, scenario_id).map_err(|e| e.to_string())?;
+
+    refresh_tray_menu(app)?;
+    app.emit("tray-scenario-switched", scenario_id.to_string())
+        .map_err(|e| e.to_string())
+}
+
 fn ensure_tray_icon(app: &tauri::AppHandle) -> tauri::Result<()> {
     if app.tray_by_id(MAIN_TRAY_ID).is_some() {
         return Ok(());
     }
 
-    use tauri::menu::{Menu, MenuItem};
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
-    let show_item = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
-    let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+    let store = app
+        .state::<Arc<core::skill_store::SkillStore>>()
+        .inner()
+        .clone();
+    let menu = build_tray_menu(app, &store)?;
 
     let mut builder = TrayIconBuilder::with_id(MAIN_TRAY_ID)
         .tooltip("Skills Manager")
@@ -104,7 +223,14 @@ fn ensure_tray_icon(app: &tauri::AppHandle) -> tauri::Result<()> {
                 log::info!("Tray menu clicked: quit");
                 request_quit(app)
             }
-            _ => {}
+            id => {
+                if let Some(scenario_id) = scenario_id_from_tray_item(id) {
+                    log::info!("Tray menu clicked: switch scenario to {scenario_id}");
+                    if let Err(err) = switch_scenario_from_tray(app, scenario_id) {
+                        log::error!("Failed to switch scenario from tray: {err}");
+                    }
+                }
+            }
         });
 
     if let Some(icon) = load_custom_tray_icon().or_else(|| app.default_window_icon().cloned()) {
@@ -345,7 +471,6 @@ fn initialize_startup_scenario(store: &Arc<core::skill_store::SkillStore>) -> Re
             .map_err(|e| e.to_string())?;
     }
 
-    commands::scenarios::sync_scenario_skills(store, &desired_active)
-        .map_err(|e| e.to_string())?;
+    commands::scenarios::sync_scenario_skills(store, &desired_active).map_err(|e| e.to_string())?;
     Ok(())
 }
