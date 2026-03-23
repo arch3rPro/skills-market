@@ -161,6 +161,7 @@
     "batchDeleteConfirm": "Delete {{count}} selected skills permanently? This removes their central library files, scenario links, and synced agent targets.",
     "batchDeleted": "{{count}} skills deleted",
     "batchDeleteFailed": "{{count}} skills failed to delete",
+    "batchToggleFailed": "{{count}} skills failed to update",
     "cancelSelect": "Cancel selection",
     "selectAll": "Select All",
     "deselectAll": "Deselect All",
@@ -473,6 +474,7 @@
     "import": "Update",
     "updateSelected": "Update {{count}}",
     "batchImported": "{{count}} skills updated",
+    "batchImportFailed": "{{count}} skills failed to update",
     "deleteSkill": "Delete skill",
     "deleteSkillConfirm": "Permanently delete skill \"{{name}}\"? This action cannot be undone.",
     "skillDeleted": "\"{{name}}\" deleted",
@@ -483,9 +485,11 @@
     "deleteSelected": "Delete {{count}}",
     "batchDeleteConfirm": "Permanently delete {{count}} selected skills? This action cannot be undone.",
     "batchDeleted": "{{count}} skills deleted",
+    "batchDeleteFailed": "{{count}} skills failed to delete",
     "batchEnable": "Enable {{count}}",
     "batchDisable": "Disable {{count}}",
     "batchEnabled": "{{count}} skills enabled",
-    "batchDisabled": "{{count}} skills disabled"
+    "batchDisabled": "{{count}} skills disabled",
+    "batchToggleFailed": "{{count}} skills failed to update"
   }
 }

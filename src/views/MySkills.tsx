@@ -337,41 +337,57 @@ export function MySkills() {
 
   const handleBatchDelete = async () => {
     const ids = Array.from(selectedIds);
-    try {
-      for (const id of ids) {
+    let deleted = 0;
+    for (const id of ids) {
+      try {
         await api.deleteManagedSkill(id);
         if (selectedSkill?.id === id) closeSkillDetail();
+        deleted++;
+      } catch {
+        // continue deleting remaining
       }
-      toast.success(t("mySkills.batchDeleted", { count: ids.length }));
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, t("common.error")));
-    } finally {
-      exitMultiSelect();
-      setBatchDeleteConfirm(false);
-      await Promise.all([refreshManagedSkills(), refreshScenarios()]);
     }
+    if (deleted > 0) {
+      toast.success(t("mySkills.batchDeleted", { count: deleted }));
+    }
+    if (deleted < ids.length) {
+      toast.error(t("mySkills.batchDeleteFailed", { count: ids.length - deleted }));
+    }
+    exitMultiSelect();
+    setBatchDeleteConfirm(false);
+    await Promise.all([refreshManagedSkills(), refreshScenarios()]);
   };
 
   const handleBatchToggleScenario = async () => {
     if (!activeScenario) return;
     const selectedSkillsList = skills.filter((s) => selectedIds.has(s.id));
-    try {
-      for (const skill of selectedSkillsList) {
+    const enabling = anyDisabled;
+    let count = 0;
+    let failed = 0;
+    for (const skill of selectedSkillsList) {
+      try {
         const enabledInScenario = skill.scenario_ids.includes(activeScenario.id);
-        if (anyDisabled && !enabledInScenario) {
+        if (enabling && !enabledInScenario) {
           await api.addSkillToScenario(skill.id, activeScenario.id);
-        } else if (!anyDisabled && enabledInScenario) {
+          count++;
+        } else if (!enabling && enabledInScenario) {
           await api.removeSkillFromScenario(skill.id, activeScenario.id);
+          count++;
         }
+      } catch {
+        failed++;
+        // continue with remaining
       }
-      toast.success(anyDisabled
-        ? t("mySkills.batchEnabled", { count: selectedIds.size })
-        : t("mySkills.batchDisabled", { count: selectedIds.size }));
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, t("common.error")));
-    } finally {
-      await Promise.all([refreshManagedSkills(), refreshScenarios()]);
     }
+    if (count > 0) {
+      toast.success(enabling
+        ? t("mySkills.batchEnabled", { count })
+        : t("mySkills.batchDisabled", { count }));
+    }
+    if (failed > 0) {
+      toast.error(t("mySkills.batchToggleFailed", { count: failed }));
+    }
+    await Promise.all([refreshManagedSkills(), refreshScenarios()]);
   };
 
   const handleToggleScenario = async (skill: ManagedSkill) => {

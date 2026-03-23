@@ -213,17 +213,27 @@ export function ProjectDetail() {
 
   const handleBatchExportFromCenter = async (skills: ManagedSkill[]) => {
     if (!id) return;
-    try {
-      for (const skill of skills) {
+    let imported = 0;
+    let failed = 0;
+    for (const skill of skills) {
+      try {
         await api.exportSkillToProject(skill.id, id);
+        imported++;
+      } catch {
+        failed++;
+        // continue with remaining
       }
-      toast.success(t("project.batchImported", { count: skills.length }));
-      setShowExportDialog(false);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, t("common.error")));
-    } finally {
-      await loadSkills();
     }
+    if (imported > 0) {
+      toast.success(t("project.batchImported", { count: imported }));
+    }
+    if (failed > 0) {
+      toast.error(t("project.batchImportFailed", { count: failed }));
+    }
+    if (imported > 0) {
+      setShowExportDialog(false);
+    }
+    await loadSkills();
   };
 
   const handleDeleteSkill = async () => {
@@ -240,39 +250,57 @@ export function ProjectDetail() {
   const handleBatchDeleteProject = async () => {
     if (!id) return;
     const dirNames = Array.from(selectedIds);
-    try {
-      for (const dirName of dirNames) {
+    let deleted = 0;
+    let failed = 0;
+    for (const dirName of dirNames) {
+      try {
         await api.deleteProjectSkill(id, dirName);
+        deleted++;
+      } catch {
+        failed++;
+        // continue deleting remaining
       }
-      toast.success(t("project.batchDeleted", { count: dirNames.length }));
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, t("common.error")));
-    } finally {
-      exitMultiSelect();
-      setBatchDeleteConfirm(false);
-      await loadSkills();
     }
+    if (deleted > 0) {
+      toast.success(t("project.batchDeleted", { count: deleted }));
+    }
+    if (failed > 0) {
+      toast.error(t("project.batchDeleteFailed", { count: failed }));
+    }
+    exitMultiSelect();
+    setBatchDeleteConfirm(false);
+    await loadSkills();
   };
 
   const handleBatchToggleProject = async () => {
     if (!id) return;
     const selectedSkillsList = skills.filter((s) => selectedIds.has(s.dir_name));
-    try {
-      for (const skill of selectedSkillsList) {
-        if (anyDisabled && !skill.enabled) {
+    const enabling = anyDisabled;
+    let count = 0;
+    let failed = 0;
+    for (const skill of selectedSkillsList) {
+      try {
+        if (enabling && !skill.enabled) {
           await api.toggleProjectSkill(id, skill.dir_name, true);
-        } else if (!anyDisabled && skill.enabled) {
+          count++;
+        } else if (!enabling && skill.enabled) {
           await api.toggleProjectSkill(id, skill.dir_name, false);
+          count++;
         }
+      } catch {
+        failed++;
+        // continue with remaining
       }
-      toast.success(anyDisabled
-        ? t("project.batchEnabled", { count: selectedIds.size })
-        : t("project.batchDisabled", { count: selectedIds.size }));
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, t("common.error")));
-    } finally {
-      await loadSkills();
     }
+    if (count > 0) {
+      toast.success(enabling
+        ? t("project.batchEnabled", { count })
+        : t("project.batchDisabled", { count }));
+    }
+    if (failed > 0) {
+      toast.error(t("project.batchToggleFailed", { count: failed }));
+    }
+    await loadSkills();
   };
 
   if (!project) return null;
@@ -820,17 +848,22 @@ function ExportFromCenterDialog({
     };
   }, [managedSkills]);
 
-  const filtered = managedSkills.filter((skill) => {
+  const filtered = useMemo(() => managedSkills.filter((skill) => {
     const matchesSearch =
       skill.name.toLowerCase().includes(search.toLowerCase()) ||
       (skill.description || "").toLowerCase().includes(search.toLowerCase());
     return matchesSearch;
-  });
+  }), [managedSkills, search]);
 
-  const isAlreadyExists = (skill: ManagedSkill) => {
+  const isAlreadyExists = useCallback((skill: ManagedSkill) => {
     const exportDirName = dirNameMap[skill.id];
     return dirNameMapError ? true : (exportDirName ? projectSkillDirNames.includes(exportDirName) : false);
-  };
+  }, [dirNameMap, dirNameMapError, projectSkillDirNames]);
+
+  const selectableFiltered = useMemo(
+    () => filtered.filter((s) => !isAlreadyExists(s)),
+    [filtered, isAlreadyExists]
+  );
 
   const {
     isMultiSelect, setIsMultiSelect,
@@ -839,10 +872,15 @@ function ExportFromCenterDialog({
     exitMultiSelect,
   } = useMultiSelect({
     items: managedSkills,
-    filtered: filtered.filter((s) => !isAlreadyExists(s)),
+    filtered: selectableFiltered,
     getKey: (s) => s.id,
     isItemActive: () => true,
   });
+
+  const selectedSelectable = useMemo(
+    () => selectableFiltered.filter((s) => selectedIds.has(s.id)),
+    [selectableFiltered, selectedIds]
+  );
 
   const handleExport = async (skill: ManagedSkill) => {
     setExporting(skill.id);
@@ -854,11 +892,10 @@ function ExportFromCenterDialog({
   };
 
   const handleBatchExport = async () => {
-    const selected = managedSkills.filter((s) => selectedIds.has(s.id));
-    if (selected.length === 0) return;
+    if (selectedSelectable.length === 0) return;
     setBatchExporting(true);
     try {
-      await onBatchExport(selected);
+      await onBatchExport(selectedSelectable);
     } finally {
       setBatchExporting(false);
     }
@@ -896,7 +933,7 @@ function ExportFromCenterDialog({
                 autoFocus
               />
             </div>
-            {selectedIds.size > 0 && isMultiSelect && (
+            {selectedSelectable.length > 0 && isMultiSelect && (
               <button
                 onClick={handleBatchExport}
                 disabled={batchExporting}
@@ -904,7 +941,7 @@ function ExportFromCenterDialog({
               >
                 {batchExporting
                   ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : t("project.updateSelected", { count: selectedIds.size })}
+                  : t("project.updateSelected", { count: selectedSelectable.length })}
               </button>
             )}
             <button
