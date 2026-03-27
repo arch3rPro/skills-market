@@ -79,7 +79,6 @@ export function Settings() {
   // Custom agent dialog
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [customName, setCustomName] = useState("");
-  const [customKey, setCustomKey] = useState("");
   const [customPath, setCustomPath] = useState("");
   const [addingCustom, setAddingCustom] = useState(false);
 
@@ -120,11 +119,28 @@ export function Settings() {
     }
   };
 
+  const generateCustomAgentKey = useCallback(
+    (name: string) => {
+      const base = name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+      const seed = base || "agent";
+      const existingKeys = new Set(tools.map((tool) => tool.key));
+      if (!existingKeys.has(seed)) return seed;
+      let n = 2;
+      while (existingKeys.has(`${seed}_${n}`)) n += 1;
+      return `${seed}_${n}`;
+    },
+    [tools]
+  );
+
   const handleAddCustomAgent = async () => {
-    const trimKey = customKey.trim();
     const trimName = customName.trim();
     const trimPath = customPath.trim();
-    if (!trimKey || !trimName || !trimPath) return;
+    if (!trimName || !trimPath) return;
+    const trimKey = generateCustomAgentKey(trimName);
     setAddingCustom(true);
     try {
       await api.addCustomTool(trimKey, trimName, trimPath);
@@ -132,7 +148,6 @@ export function Settings() {
       toast.success(t("settings.customAgentAdded"));
       setShowAddCustom(false);
       setCustomName("");
-      setCustomKey("");
       setCustomPath("");
     } catch (e) {
       toast.error(String(e));
@@ -426,34 +441,22 @@ export function Settings() {
 
           {/* Add custom agent form */}
           {showAddCustom && (
-            <div className="app-panel p-4 mb-3 space-y-3">
+            <div className="app-panel p-4 mb-3 space-y-2.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-[13px] font-medium text-secondary">{t("settings.addCustomAgent")}</h3>
                 <button onClick={() => setShowAddCustom(false)} className="text-muted hover:text-secondary outline-none">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[12px] text-muted mb-1 block">{t("settings.agentName")}</label>
-                  <input
-                    type="text"
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder={t("settings.agentNamePlaceholder")}
-                    className={`${fieldClass} w-full`}
-                  />
-                </div>
-                <div>
-                  <label className="text-[12px] text-muted mb-1 block">{t("settings.agentKey")}</label>
-                  <input
-                    type="text"
-                    value={customKey}
-                    onChange={(e) => setCustomKey(e.target.value.replace(/[^a-z0-9_]/g, ""))}
-                    placeholder={t("settings.agentKeyPlaceholder")}
-                    className={`${fieldClass} w-full font-mono`}
-                  />
-                </div>
+              <div>
+                <label className="text-[12px] text-muted mb-1 block">{t("settings.agentName")}</label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder={t("settings.agentNamePlaceholder")}
+                  className={`${fieldClass} w-full`}
+                />
               </div>
               <div>
                 <label className="text-[12px] text-muted mb-1 block">{t("settings.skillsPath")}</label>
@@ -472,17 +475,15 @@ export function Settings() {
                     <FolderOpen className="w-3 h-3" />
                     {t("settings.selectFolder")}
                   </button>
+                  <button
+                    onClick={handleAddCustomAgent}
+                    disabled={addingCustom || !customName.trim() || !customPath.trim()}
+                    className={`${actionButtonClass} bg-accent text-white border-accent hover:opacity-90 disabled:opacity-50`}
+                  >
+                    {addingCustom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                    {t("settings.addAgent")}
+                  </button>
                 </div>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={handleAddCustomAgent}
-                  disabled={addingCustom || !customName.trim() || !customKey.trim() || !customPath.trim()}
-                  className={`${actionButtonClass} bg-accent text-white border-accent hover:opacity-90 disabled:opacity-50`}
-                >
-                  {addingCustom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                  {t("common.create")}
-                </button>
               </div>
             </div>
           )}
