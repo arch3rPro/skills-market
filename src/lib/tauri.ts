@@ -61,6 +61,14 @@ export interface SkillDocument {
   central_path: string;
 }
 
+export interface SourceSkillDocument {
+  skill_id: string;
+  filename: string;
+  content: string;
+  source_label: string;
+  revision: string;
+}
+
 export interface Scenario {
   id: string;
   name: string;
@@ -165,6 +173,9 @@ export const getSkillsForScenario = (scenarioId: string) =>
 
 export const getSkillDocument = (skillId: string) =>
   invoke<SkillDocument>("get_skill_document", { skillId });
+
+export const getSourceSkillDocument = (skillId: string) =>
+  invoke<SourceSkillDocument>("get_source_skill_document", { skillId });
 
 export const deleteManagedSkill = (skillId: string) =>
   invoke<void>("delete_managed_skill", { skillId });

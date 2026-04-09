@@ -117,6 +117,12 @@
     "sourceBranch": "Branch",
     "sourceSubpath": "Subpath",
     "sourceRevision": "Revision",
+    "docTabs": {
+      "local": "Local",
+      "diff": "Diff",
+      "source": "Source"
+    },
+    "sourceDiffUnavailable": "Source content is unavailable right now",
     "localSource": "Local library",
     "agentCount": "{{count}} agents",
     "ready": "Ready",

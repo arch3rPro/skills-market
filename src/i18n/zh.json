@@ -117,6 +117,12 @@
     "sourceBranch": "分支",
     "sourceSubpath": "子路径",
     "sourceRevision": "版本",
+    "docTabs": {
+      "local": "本地",
+      "diff": "差异",
+      "source": "来源"
+    },
+    "sourceDiffUnavailable": "暂时无法读取来源版本内容",
     "localSource": "本地仓库",
     "agentCount": "{{count}} 个 Agent",
     "ready": "已就绪",

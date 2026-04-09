@@ -405,6 +405,7 @@ pub fn run() {
             commands::skills::get_managed_skills,
             commands::skills::get_skills_for_scenario,
             commands::skills::get_skill_document,
+            commands::skills::get_source_skill_document,
             commands::skills::delete_managed_skill,
             commands::skills::install_local,
             commands::skills::install_git,

@@ -67,6 +67,15 @@ pub struct SkillDocumentDto {
     pub central_path: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct SourceSkillDocumentDto {
+    pub skill_id: String,
+    pub filename: String,
+    pub content: String,
+    pub source_label: String,
+    pub revision: String,
+}
+
 #[derive(Debug, Clone)]
 struct InstallSourceMetadata {
     source_type: String,
@@ -173,45 +182,131 @@ pub async fn get_skill_document(
             .map_err(AppError::db)?
             .ok_or_else(|| AppError::not_found("Skill not found"))?;
 
-        let central = PathBuf::from(&skill.central_path);
-        let candidates = [
-            "SKILL.md",
-            "skill.md",
-            "CLAUDE.md",
-            "claude.md",
-            "README.md",
-            "readme.md",
-        ];
+        let (filename, content) = read_skill_document_from_dir(Path::new(&skill.central_path))?;
 
-        for name in &candidates {
-            let path = central.join(name);
-            if path.exists() {
-                let content = std::fs::read_to_string(&path)?;
-                return Ok(SkillDocumentDto {
-                    skill_id,
-                    filename: name.to_string(),
-                    content,
-                    central_path: skill.central_path,
-                });
-            }
-        }
-
-        for e in WalkDir::new(&central).max_depth(4).into_iter().flatten() {
-            let fname = e.file_name().to_string_lossy();
-            if candidates.contains(&fname.as_ref()) {
-                let content = std::fs::read_to_string(e.path())?;
-                return Ok(SkillDocumentDto {
-                    skill_id,
-                    filename: fname.to_string(),
-                    content,
-                    central_path: skill.central_path,
-                });
-            }
-        }
-
-        Err(AppError::not_found("No documentation file found"))
+        Ok(SkillDocumentDto {
+            skill_id,
+            filename,
+            content,
+            central_path: skill.central_path,
+        })
     })
     .await?
+}
+
+#[tauri::command]
+pub async fn get_source_skill_document(
+    skill_id: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<SourceSkillDocumentDto, AppError> {
+    let store = store.inner().clone();
+    let proxy_url = store.proxy_url();
+    tauri::async_runtime::spawn_blocking(move || {
+        let skill = store
+            .get_skill_by_id(&skill_id)
+            .map_err(AppError::db)?
+            .ok_or_else(|| AppError::not_found("Skill not found"))?;
+
+        if matches!(skill.source_type.as_str(), "local" | "import") {
+            let source_path = skill.source_ref.as_ref().ok_or_else(|| {
+                AppError::not_found("Local skill is missing its original source path")
+            })?;
+            let source_dir = PathBuf::from(source_path);
+            if !source_dir.exists() {
+                return Err(AppError::not_found("Original source path no longer exists"));
+            }
+            let (filename, content) = read_skill_document_from_dir(&source_dir)?;
+            return Ok(SourceSkillDocumentDto {
+                skill_id,
+                filename,
+                content,
+                source_label: source_label_for_skill(&skill),
+                revision: "workspace".to_string(),
+            });
+        }
+
+        if !matches!(skill.source_type.as_str(), "git" | "skillssh") {
+            return Err(AppError::invalid_input("Skill does not support source diff preview"));
+        }
+
+        let git_source = git_source_from_skill(&skill)?;
+        git_fetcher::validate_git_url(&git_source.clone_url).map_err(AppError::git)?;
+        let remote_revision = git_fetcher::resolve_remote_revision(
+            &git_source.clone_url,
+            git_source.branch.as_deref(),
+            proxy_url.as_deref(),
+        )
+        .map_err(AppError::git)?;
+
+        let temp_dir = git_fetcher::clone_repo_ref(
+            &git_source.clone_url,
+            git_source.branch.as_deref(),
+            None,
+            proxy_url.as_deref(),
+        )
+        .map_err(AppError::classify_git_error)?;
+
+        let result = (|| -> Result<SourceSkillDocumentDto, AppError> {
+            git_fetcher::checkout_revision(&temp_dir, &remote_revision).map_err(AppError::git)?;
+            let skill_dir = resolve_skill_dir(
+                &temp_dir,
+                git_source.subpath.as_deref(),
+                git_source.locator_skill_id.as_deref(),
+            )?;
+            let (filename, content) = read_skill_document_from_dir(&skill_dir)?;
+
+            Ok(SourceSkillDocumentDto {
+                skill_id,
+                filename,
+                content,
+                source_label: source_label_for_skill(&skill),
+                revision: remote_revision,
+            })
+        })();
+
+        git_fetcher::cleanup_temp(&temp_dir);
+        result
+    })
+    .await?
+}
+
+fn read_skill_document_from_dir(dir: &Path) -> Result<(String, String), AppError> {
+    let candidates = [
+        "SKILL.md",
+        "skill.md",
+        "CLAUDE.md",
+        "claude.md",
+        "README.md",
+        "readme.md",
+    ];
+
+    for name in &candidates {
+        let path = dir.join(name);
+        if path.exists() {
+            let content = std::fs::read_to_string(&path)?;
+            return Ok((name.to_string(), content));
+        }
+    }
+
+    for e in WalkDir::new(dir).max_depth(4).into_iter().flatten() {
+        let fname = e.file_name().to_string_lossy();
+        if candidates.contains(&fname.as_ref()) {
+            let content = std::fs::read_to_string(e.path())?;
+            return Ok((fname.to_string(), content));
+        }
+    }
+
+    Err(AppError::not_found("No documentation file found"))
+}
+
+fn source_label_for_skill(skill: &SkillRecord) -> String {
+    match skill.source_type.as_str() {
+        "skillssh" => "skills.sh".to_string(),
+        "git" => "Git".to_string(),
+        "local" => "Local".to_string(),
+        "import" => "Imported".to_string(),
+        other => other.to_string(),
+    }
 }
 
 #[tauri::command]

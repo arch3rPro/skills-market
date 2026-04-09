@@ -16,10 +16,13 @@ import { useTranslation } from "react-i18next";
 import { cn } from "../utils";
 import {
   getSkillDocument,
+  getSourceSkillDocument,
   type ManagedSkill,
   type SkillDocument,
+  type SourceSkillDocument,
   type SkillToolToggle,
 } from "../lib/tauri";
+import { DocumentDiffViewer } from "./DocumentDiffViewer";
 import { SkillMarkdown } from "./SkillMarkdown";
 
 interface Props {
@@ -39,11 +42,20 @@ export function SkillDetailPanel({
 }: Props) {
   const { t } = useTranslation();
   const [doc, setDoc] = useState<SkillDocument | null>(null);
+  const [sourceDoc, setSourceDoc] = useState<SourceSkillDocument | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sourceLoading, setSourceLoading] = useState(false);
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
   const [isAgentSectionExpanded, setIsAgentSectionExpanded] = useState(false);
-  const requestIdRef = useRef(0);
+  const [contentTab, setContentTab] = useState<"local" | "diff" | "source">("local");
+  const localRequestIdRef = useRef(0);
+  const sourceRequestIdRef = useRef(0);
   const skillId = skill?.id ?? null;
+  const supportsSourceDiff =
+    skill?.source_type === "git"
+    || skill?.source_type === "skillssh"
+    || skill?.source_type === "local"
+    || skill?.source_type === "import";
 
   useEffect(() => {
     if (!skillId) {
@@ -51,32 +63,65 @@ export function SkillDetailPanel({
       setLoading(false);
       return;
     }
-    requestIdRef.current += 1;
-    const requestId = requestIdRef.current;
+    localRequestIdRef.current += 1;
+    const requestId = localRequestIdRef.current;
 
     // Loading state is intentionally toggled when input skill changes.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     getSkillDocument(skillId)
       .then((nextDoc) => {
-        if (requestId === requestIdRef.current) {
+        if (requestId === localRequestIdRef.current) {
           setDoc(nextDoc);
         }
       })
       .catch(() => {
-        if (requestId === requestIdRef.current) {
+        if (requestId === localRequestIdRef.current) {
           setDoc(null);
         }
       })
       .finally(() => {
-        if (requestId === requestIdRef.current) {
+        if (requestId === localRequestIdRef.current) {
           setLoading(false);
         }
       });
   }, [skillId]);
 
   useEffect(() => {
+    if (!skillId || !supportsSourceDiff) {
+      setSourceDoc(null);
+      setSourceLoading(false);
+      return;
+    }
+
+    sourceRequestIdRef.current += 1;
+    const requestId = sourceRequestIdRef.current;
+
+    setSourceLoading(true);
+    getSourceSkillDocument(skillId)
+      .then((nextDoc) => {
+        if (requestId === sourceRequestIdRef.current) {
+          setSourceDoc(nextDoc);
+        }
+      })
+      .catch(() => {
+        if (requestId === sourceRequestIdRef.current) {
+          setSourceDoc(null);
+        }
+      })
+      .finally(() => {
+        if (requestId === sourceRequestIdRef.current) {
+          setSourceLoading(false);
+        }
+      });
+  }, [skillId, supportsSourceDiff]);
+
+  useEffect(() => {
     setIsMetadataExpanded(false);
+  }, [skillId]);
+
+  useEffect(() => {
+    setContentTab("local");
   }, [skillId]);
 
   if (!skill) return null;
@@ -106,6 +151,7 @@ export function SkillDetailPanel({
   ].filter((item) => Boolean(item.value));
 
   const activeDoc = doc?.skill_id === skill.id ? doc : null;
+  const activeSourceDoc = sourceDoc?.skill_id === skill.id ? sourceDoc : null;
   const availableToggleCount =
     toolToggles?.filter((item) => item.installed && item.globally_enabled).length ?? 0;
   const syncedAvailableCount =
@@ -285,8 +331,54 @@ export function SkillDetailPanel({
         )}
 
         <div className="px-5 py-5 scrollbar-hide">
+          {supportsSourceDiff && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {(["local", "diff", "source"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setContentTab(tab)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors",
+                    contentTab === tab
+                      ? "bg-accent text-white"
+                      : "bg-surface-hover text-muted hover:text-secondary"
+                  )}
+                  disabled={(tab === "diff" || tab === "source") && sourceLoading}
+                >
+                  {tab === "local"
+                    ? t("mySkills.docTabs.local")
+                    : tab === "diff"
+                      ? t("mySkills.docTabs.diff")
+                      : t("mySkills.docTabs.source")}
+                </button>
+              ))}
+              {activeSourceDoc && (
+                <span className="rounded-full border border-border-subtle bg-surface px-2 py-1 text-[12px] text-muted">
+                  {activeSourceDoc.source_label} · {activeSourceDoc.revision.slice(0, 7)}
+                </span>
+              )}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-[13px] text-muted text-center mt-12">{t("common.loading")}</div>
+          ) : contentTab === "diff" ? (
+            activeDoc && activeSourceDoc ? (
+              <DocumentDiffViewer original={activeDoc.content} updated={activeSourceDoc.content} />
+            ) : sourceLoading ? (
+              <div className="text-[13px] text-muted text-center mt-12">{t("common.loading")}</div>
+            ) : (
+              <div className="text-[13px] text-muted text-center mt-12">{t("mySkills.sourceDiffUnavailable")}</div>
+            )
+          ) : contentTab === "source" ? (
+            sourceLoading ? (
+              <div className="text-[13px] text-muted text-center mt-12">{t("common.loading")}</div>
+            ) : activeSourceDoc ? (
+              <SkillMarkdown content={activeSourceDoc.content} />
+            ) : (
+              <div className="text-[13px] text-muted text-center mt-12">{t("mySkills.sourceDiffUnavailable")}</div>
+            )
           ) : activeDoc ? (
             <SkillMarkdown content={activeDoc.content} />
           ) : (
