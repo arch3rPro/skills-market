@@ -83,6 +83,7 @@ export interface Scenario {
 
 export interface DiscoveredGroup {
   name: string;
+  description: string | null;
   fingerprint: string | null;
   locations: { id: string; tool: string; found_path: string }[];
   imported: boolean;
@@ -371,6 +372,9 @@ export const hideToTray = () => invoke<void>("hide_to_tray");
 
 export const openCentralRepoFolder = () =>
   invoke<void>("open_central_repo_folder");
+
+export const openFolder = (path: string): Promise<void> =>
+  invoke<void>("open_folder", { path });
 
 export interface AppUpdateInfo {
   has_update: boolean;

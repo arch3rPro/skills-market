@@ -55,6 +55,7 @@ pub struct DiscoveredSkillRecord {
     pub tool: String,
     pub found_path: String,
     pub name_guess: Option<String>,
+    pub description: Option<String>,
     pub fingerprint: Option<String>,
     pub found_at: i64,
     pub imported_skill_id: Option<String>,
@@ -428,13 +429,14 @@ impl SkillStore {
     pub fn insert_discovered(&self, rec: &DiscoveredSkillRecord) -> Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
-            "INSERT INTO discovered_skills (id, tool, found_path, name_guess, fingerprint, found_at, imported_skill_id)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            "INSERT INTO discovered_skills (id, tool, found_path, name_guess, description, fingerprint, found_at, imported_skill_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
                 rec.id,
                 rec.tool,
                 rec.found_path,
                 rec.name_guess,
+                rec.description,
                 rec.fingerprint,
                 rec.found_at,
                 rec.imported_skill_id,
@@ -446,7 +448,7 @@ impl SkillStore {
     pub fn get_all_discovered(&self) -> Result<Vec<DiscoveredSkillRecord>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, tool, found_path, name_guess, fingerprint, found_at, imported_skill_id FROM discovered_skills",
+            "SELECT id, tool, found_path, name_guess, description, fingerprint, found_at, imported_skill_id FROM discovered_skills",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok(DiscoveredSkillRecord {
@@ -454,9 +456,10 @@ impl SkillStore {
                 tool: row.get(1)?,
                 found_path: row.get(2)?,
                 name_guess: row.get(3)?,
-                fingerprint: row.get(4)?,
-                found_at: row.get(5)?,
-                imported_skill_id: row.get(6)?,
+                description: row.get(4)?,
+                fingerprint: row.get(5)?,
+                found_at: row.get(6)?,
+                imported_skill_id: row.get(7)?,
             })
         })?;
         Ok(rows.filter_map(|r| r.ok()).collect())

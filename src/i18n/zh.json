@@ -3,9 +3,9 @@
     "name": "Skills Manager"
   },
   "sidebar": {
-    "dashboard": "Dashboard",
-    "mySkills": "我的 Skills",
-    "installSkills": "安装 Skills",
+    "dashboard": "数据看板",
+    "mySkills": "技能管理",
+    "installSkills": "技能商店",
     "scenarios": "场景",
     "newScenario": "新建场景",
     "projects": "项目工作区",
@@ -69,7 +69,9 @@
     "recentActivity": "近期动态"
   },
   "mySkills": {
-    "title": "我的 Skills",
+    "title": "技能管理",
+    "tabSkillRepo": "技能仓库",
+    "tabLocalSkills": "本地技能",
     "subtitle": "中央仓库共 {{count}} 个 Skills 已在“{{scenario}}”场景中启用",
     "searchPlaceholder": "搜索中央仓库中的 Skills...",
     "allStatus": "全部状态",

@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 use rusqlite::Connection;
 
 /// Current schema version. Bump this when adding a new migration.
-const LATEST_VERSION: u32 = 4;
+const LATEST_VERSION: u32 = 5;
 
 /// Run all pending migrations on the database.
 ///
@@ -51,6 +51,7 @@ fn migrate_step(conn: &Connection, from_version: u32) -> Result<()> {
         1 => migrate_v1_to_v2(conn),
         2 => migrate_v2_to_v3(conn),
         3 => migrate_v3_to_v4(conn),
+        4 => migrate_v4_to_v5(conn),
         _ => bail!("unknown migration version: {from_version}"),
     }
 }
@@ -237,6 +238,12 @@ fn migrate_v3_to_v4(conn: &Connection) -> Result<()> {
     add_column_if_missing(conn, "projects", "linked_agent_key", "TEXT")?;
     add_column_if_missing(conn, "projects", "linked_agent_name", "TEXT")?;
     add_column_if_missing(conn, "projects", "disabled_path", "TEXT")?;
+    Ok(())
+}
+
+/// v4 → v5: Add description column to discovered_skills.
+fn migrate_v4_to_v5(conn: &Connection) -> Result<()> {
+    add_column_if_missing(conn, "discovered_skills", "description", "TEXT")?;
     Ok(())
 }
 

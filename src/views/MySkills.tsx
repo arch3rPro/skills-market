@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search,
   LayoutGrid,
@@ -21,6 +22,10 @@ import {
   SquareCheck,
   Square,
   GripVertical,
+  FolderSearch,
+  DownloadCloud,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { open as dialogOpen } from "@tauri-apps/plugin-dialog";
 import { useTranslation } from "react-i18next";
@@ -41,6 +46,7 @@ import type {
   GitBackupStatus,
   GitBackupVersion,
   SkillToolToggle,
+  ScanResult,
 } from "../lib/tauri";
 import { getErrorMessage, getErrorKind } from "../lib/error";
 import {
@@ -127,6 +133,10 @@ export function MySkills() {
     openSkillDetailById,
     closeSkillDetail,
   } = useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"repo" | "local">(
+    (searchParams.get("tab") as "repo" | "local" | null) === "local" ? "local" : "repo"
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filterMode, setFilterMode] = useState<"all" | "enabled" | "available">("all");
   const [sourceFilters, setSourceFilters] = useState<Set<string>>(new Set());
@@ -153,6 +163,15 @@ export function MySkills() {
   const [tagEditSkillId, setTagEditSkillId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
   const tagInputRef = useRef<HTMLInputElement>(null);
+
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [importingPaths, setImportingPaths] = useState<Set<string>>(new Set());
+  const [importingAll, setImportingAll] = useState(false);
+  const [selectedScanGroups, setSelectedScanGroups] = useState<Set<string>>(new Set());
+  const [importingSelected, setImportingSelected] = useState(false);
+  const [localSourceFilters, setLocalSourceFilters] = useState<Set<string>>(new Set());
 
   const [scenarioSkillOrder, setScenarioSkillOrder] = useState<string[]>([]);
 
@@ -872,6 +891,164 @@ export function MySkills() {
   const sourceTypeLabel = (skill: ManagedSkill) =>
     skill.source_type === "skillssh" ? "skills.sh" : skill.source_type;
 
+  const loadCachedScan = (): ScanResult | null => {
+    try {
+      const cached = sessionStorage.getItem("scan_local_skills");
+      if (cached) {
+        return JSON.parse(cached) as ScanResult;
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return null;
+  };
+
+  const cacheScan = (result: ScanResult) => {
+    try {
+      sessionStorage.setItem("scan_local_skills", JSON.stringify(result));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const runScan = useCallback(async () => {
+    setScanLoading(true);
+    setLocalError(null);
+    try {
+      const result = await api.scanLocalSkills();
+      setScanResult(result);
+      cacheScan(result);
+    } catch (error: unknown) {
+      console.error(error);
+      const message = getErrorMessage(error, t("common.error"));
+      setLocalError(message);
+      toast.error(message);
+    } finally {
+      setScanLoading(false);
+    }
+  }, [t]);
+
+  const didInitialScanRef = useRef(false);
+
+  useEffect(() => {
+    if (activeTab === "local" && !didInitialScanRef.current) {
+      didInitialScanRef.current = true;
+      const cached = loadCachedScan();
+      if (cached && cached.groups.length > 0) {
+        setScanResult(cached);
+      } else if (!scanLoading) {
+        runScan();
+      }
+    }
+  }, [activeTab]);
+
+  const handleImportDiscovered = async (sourcePath: string, name: string) => {
+    setImportingPaths((prev) => new Set(prev).add(sourcePath));
+    try {
+      await api.importExistingSkill(sourcePath, name);
+      toast.success(t("install.scan.importedOne", { name }));
+      await Promise.all([refreshScenarios(), refreshManagedSkills()]);
+      await runScan();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t("common.error")));
+    } finally {
+      setImportingPaths((prev) => {
+        const next = new Set(prev);
+        next.delete(sourcePath);
+        return next;
+      });
+    }
+  };
+
+  const handleImportAllDiscovered = async () => {
+    setImportingAll(true);
+    try {
+      await api.importAllDiscovered();
+      toast.success(t("install.scan.importedAll"));
+      await Promise.all([refreshScenarios(), refreshManagedSkills()]);
+      await runScan();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t("common.error")));
+    } finally {
+      setImportingAll(false);
+    }
+  };
+
+  const handleToggleSelectGroup = (groupName: string) => {
+    setSelectedScanGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupName)) {
+        next.delete(groupName);
+      } else {
+        next.add(groupName);
+      }
+      return next;
+    });
+  };
+
+  const handleScanSelectAll = () => {
+    const allPendingNames = scanGroups.filter((g) => !g.imported).map((g) => g.name);
+    setSelectedScanGroups(new Set(allPendingNames));
+  };
+
+  const handleScanDeselectAll = () => {
+    setSelectedScanGroups(new Set());
+  };
+
+  const handleImportSelected = async () => {
+    setImportingSelected(true);
+    try {
+      const selectedGroups = scanGroups.filter((g) => selectedScanGroups.has(g.name));
+      for (const group of selectedGroups) {
+        const primaryPath = group.locations[0]?.found_path;
+        const importName = group.name;
+        if (primaryPath) {
+          await api.importExistingSkill(primaryPath, importName);
+        }
+      }
+      toast.success(`已导入 ${selectedGroups.length} 个技能`);
+      await Promise.all([refreshScenarios(), refreshManagedSkills()]);
+      await runScan();
+      setSelectedScanGroups(new Set());
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, t("common.error")));
+    } finally {
+      setImportingSelected(false);
+    }
+  };
+
+  const scanGroups = scanResult?.groups ?? [];
+  const pendingGroups = scanGroups.filter((group) => !group.imported);
+
+  const localSourceOptions = useMemo(() => {
+    const sources = new Set<string>();
+    for (const g of scanGroups) {
+      for (const loc of g.locations) {
+        sources.add(loc.tool);
+      }
+    }
+    return Array.from(sources);
+  }, [scanGroups]);
+
+  const filteredScanGroups = useMemo(() => {
+    if (localSourceFilters.size === 0) return scanGroups;
+    return scanGroups.filter((g) =>
+      g.locations.some((loc) => localSourceFilters.has(loc.tool))
+    );
+  }, [scanGroups, localSourceFilters]);
+
+  const toggleLocalSource = (source: string) => {
+    setLocalSourceFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(source)) {
+        next.delete(source);
+      } else {
+        next.add(source);
+      }
+      return next;
+    });
+  };
+
   const formatGitDateTime = (iso: string) => {
     if (!iso) return "—";
     const d = new Date(iso);
@@ -923,15 +1100,46 @@ export function MySkills() {
 
   return (
     <div className="app-page">
-      <div className="app-page-header pr-2 pb-1">
-        <h1 className="app-page-title flex items-center gap-2">
+      <div className="app-page-header border-b-0 pb-0">
+        <h1 className="app-page-title mb-4">
           {t("mySkills.title")}
-          <span className="app-badge">
-            {skills.length}
-          </span>
         </h1>
+        <div className="flex gap-1 border-b border-border-subtle">
+          {[
+            { id: "repo" as const, label: t("mySkills.tabSkillRepo"), icon: Layers },
+            { id: "local" as const, label: t("mySkills.tabLocalSkills"), icon: HardDrive },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSearchParams(tab.id === "repo" ? {} : { tab: "local" }, { replace: true });
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 border-b-2 px-1 pb-1.5 text-[13px] font-medium transition-colors outline-none",
+                  isActive
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-tertiary"
+                )}
+              >
+                <Icon className="h-2.5 w-2.5" />
+                {tab.label}
+                {tab.id === "repo" && (
+                  <span className="app-badge ml-1">
+                    {skills.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {activeTab === "repo" ? (
+        <>
       <div className="app-toolbar">
         <div className="flex flex-1 gap-3">
           <div className="relative w-full max-w-[280px]">
@@ -1586,6 +1794,247 @@ export function MySkills() {
         onClose={() => setRestoreVersionTag(null)}
         onConfirm={handleRestoreVersion}
       />
+        </>
+      ) : null}
+
+      {activeTab === "local" ? (
+        <div className="app-page-content">
+          <div className="flex flex-col gap-4 border-b border-border-subtle px-4 py-3.5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-[13px] font-semibold text-secondary">{t("install.scan.title")}</h2>
+                <p className="mt-0.5 text-[13px] text-muted">
+                  {scanResult
+                    ? t("install.scan.summary", {
+                        tools: scanResult.tools_scanned,
+                        skills: scanResult.skills_found,
+                      })
+                    : t("install.scan.initial")}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={runScan}
+                  disabled={scanLoading}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-hover px-3 py-2 text-[13px] font-medium text-secondary transition-colors hover:bg-surface-active disabled:opacity-50"
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", scanLoading && "animate-spin")} />
+                  {t("install.scan.rescan")}
+                </button>
+              </div>
+            </div>
+            {pendingGroups.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleScanSelectAll}
+                    disabled={scanLoading || importingAll || importingSelected}
+                    className="text-[13px] text-accent-light hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    全选
+                  </button>
+                  <span className="text-faint">·</span>
+                  <button
+                    type="button"
+                    onClick={handleScanDeselectAll}
+                    disabled={scanLoading || importingAll || importingSelected}
+                    className="text-[13px] text-muted hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    取消全选
+                  </button>
+                </div>
+                <div className="flex-1" />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleImportSelected}
+                    disabled={scanLoading || importingAll || importingSelected || selectedScanGroups.size === 0}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-accent-border bg-accent-dark px-3 py-2 text-[13px] font-medium text-white transition-colors hover:bg-accent disabled:opacity-50"
+                  >
+                    {importingSelected ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <DownloadCloud className="h-3.5 w-3.5" />
+                    )}
+                    导入选中 ({selectedScanGroups.size})
+                  </button>
+                  <button
+                    onClick={handleImportAllDiscovered}
+                    disabled={scanLoading || importingAll || importingSelected || pendingGroups.length === 0}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-background px-3 py-2 text-[13px] font-medium text-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
+                  >
+                    {importingAll ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <DownloadCloud className="h-3.5 w-3.5" />
+                    )}
+                    {t("install.scan.importAll")}
+                  </button>
+                </div>
+              </div>
+            )}
+            {localSourceOptions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1">
+                {localSourceOptions.map((src) => (
+                  <button
+                    key={src}
+                    onClick={() => toggleLocalSource(src)}
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[12px] font-medium transition-colors",
+                      localSourceFilters.has(src)
+                        ? "bg-accent text-white"
+                        : "bg-surface-hover text-muted hover:text-secondary"
+                    )}
+                  >
+                    {src}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {localError ? (
+            <div className="mx-4 mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-[13px] text-red-400">
+              {localError}
+            </div>
+          ) : null}
+
+          <div className="space-y-4 p-4">
+            {scanLoading ? (
+              <div className="flex items-center justify-center gap-2.5 py-12 text-muted">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-[13px]">{t("install.scan.scanning")}</span>
+              </div>
+            ) : scanResult && scanGroups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-surface-hover">
+                  <FolderSearch className="h-5 w-5 text-muted" />
+                </div>
+                <h3 className="mb-1 text-[13px] font-semibold text-tertiary">
+                  {t("install.scan.noResults")}
+                </h3>
+                <p className="text-[13px] text-muted">{t("install.scan.noResultsHint")}</p>
+              </div>
+            ) : filteredScanGroups.length === 0 && localSourceFilters.size > 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <h3 className="mb-1 text-[13px] font-semibold text-tertiary">无匹配结果</h3>
+                <p className="text-[13px] text-muted">尝试调整来源筛选条件</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                  {filteredScanGroups.map((group) => {
+                    const primaryLocation = group.locations[0];
+                    const primaryPath = primaryLocation?.found_path;
+                    const isImporting = !!primaryPath && importingPaths.has(primaryPath);
+                    const importName = group.name;
+                    const isSelected = selectedScanGroups.has(group.name);
+
+                    return (
+                      <article
+                        key={group.name}
+                        className={cn(
+                          "group relative flex h-full flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface transition-all",
+                          isSelected
+                            ? "border-accent border-accent/40 ring-1 ring-accent"
+                            : "hover:border-border hover:bg-surface-hover",
+                          group.imported && "opacity-60"
+                        )}
+                      >
+                        {isSelected && !group.imported && (
+                          <div className="absolute right-2 top-2 rounded-lg border border-border-subtle bg-surface px-1 py-0.5 shadow-sm">
+                            <Check className="h-3 w-3 text-accent" />
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-2 p-3.5">
+                          <div className="flex min-w-0 items-center gap-2">
+                            {!group.imported && (
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                disabled={scanLoading || importingAll || importingSelected}
+                                onChange={() => handleToggleSelectGroup(group.name)}
+                                className="h-3.5 w-3.5 shrink-0 accent-accent"
+                              />
+                            )}
+                            <h3 className="flex-1 cursor-default truncate text-[14px] font-semibold text-primary" title={group.name}>
+                              {group.name}
+                            </h3>
+                          </div>
+
+                          {group.description && (
+                            <p className="line-clamp-2 text-[12px] leading-[16px] text-muted" title={group.description}>
+                              {group.description}
+                            </p>
+                          )}
+
+                          <div className="space-y-1">
+                            {group.locations.map((location) => (
+                              <div
+                                key={location.id}
+                                className="flex min-w-0 items-center gap-1.5 text-[12px] text-muted"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (location.found_path) {
+                                      api.openFolder(location.found_path).catch(() => {});
+                                    }
+                                  }}
+                                  className="flex min-w-0 flex-1 items-center gap-1 truncate text-muted transition-colors hover:text-accent-light"
+                                  title={location.found_path}
+                                >
+                                  <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{location.found_path}</span>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {group.imported ? (
+                              <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[12px] font-medium text-emerald-400">
+                                {t("install.scan.imported")}
+                              </span>
+                            ) : null}
+                            {group.locations.map((location) => (
+                              <span
+                                key={location.tool}
+                                className="rounded-full bg-accent-bg px-2 py-0.5 text-[12px] font-medium text-accent-light"
+                              >
+                                {location.tool}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {!group.imported && (
+                          <div className="mt-auto border-t border-border-subtle px-3.5 py-2.5">
+                            <button
+                              onClick={() => primaryPath && handleImportDiscovered(primaryPath, importName)}
+                              disabled={!primaryPath || isImporting}
+                              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-accent-border bg-accent-dark px-2.5 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-accent disabled:opacity-50"
+                            >
+                              {isImporting ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <DownloadCloud className="h-3.5 w-3.5" />
+                              )}
+                              {t("install.scan.importOne")}
+                            </button>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

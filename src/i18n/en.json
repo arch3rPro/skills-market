@@ -69,8 +69,10 @@
     "recentActivity": "Recent Activity"
   },
   "mySkills": {
-    "title": "My Skills",
-    "subtitle": "{{count}} skills from the central library are enabled in “{{scenario}}”",
+    "title": "Skills Management",
+    "tabSkillRepo": "Skill Repository",
+    "tabLocalSkills": "Local Skills",
+    "subtitle": "{{count}} skills from the central library are enabled in \"{{scenario}}\"",
     "searchPlaceholder": "Search skills in the central library...",
     "allStatus": "All Status",
     "synced": "Synced",

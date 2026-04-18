@@ -119,6 +119,39 @@ pub async fn open_central_repo_folder() -> Result<(), AppError> {
 }
 
 #[tauri::command]
+pub async fn open_folder(path: String) -> Result<(), AppError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        #[cfg(target_os = "macos")]
+        let mut cmd = Command::new("open");
+        #[cfg(target_os = "windows")]
+        let mut cmd = {
+            let mut c = Command::new("explorer");
+            use std::os::windows::process::CommandExt;
+            c.creation_flags(0x08000000);
+            c
+        };
+        #[cfg(target_os = "linux")]
+        let mut cmd = Command::new("xdg-open");
+
+        let status = cmd
+            .arg(&path)
+            .status()
+            .map_err(|e| AppError::io(format!("Failed to open folder: {e}")))?;
+
+        #[cfg(not(target_os = "windows"))]
+        if !status.success() {
+            return Err(AppError::io(format!(
+                "File manager exited with status: {status}"
+            )));
+        }
+
+        let _ = status;
+        Ok(())
+    })
+    .await?
+}
+
+#[tauri::command]
 pub async fn check_app_update(
     app: tauri::AppHandle,
     store: State<'_, Arc<SkillStore>>,

@@ -166,6 +166,11 @@ pub fn infer_skill_name(dir: &Path) -> String {
         .unwrap_or_else(|| "unknown-skill".to_string())
 }
 
+pub fn infer_skill_description(dir: &Path) -> Option<String> {
+    let meta = parse_skill_md(dir);
+    meta.description
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

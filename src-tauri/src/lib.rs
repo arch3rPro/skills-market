@@ -441,6 +441,7 @@ pub fn run() {
             commands::settings::get_central_repo_path_override,
             commands::settings::set_central_repo_path,
             commands::settings::open_central_repo_folder,
+            commands::settings::open_folder,
             commands::settings::check_app_update,
             commands::settings::app_exit,
             commands::settings::hide_to_tray,

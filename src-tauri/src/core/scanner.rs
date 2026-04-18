@@ -17,6 +17,7 @@ pub struct ScanPlan {
 #[derive(Debug, Clone, Serialize)]
 pub struct DiscoveredGroup {
     pub name: String,
+    pub description: Option<String>,
     pub fingerprint: Option<String>,
     pub locations: Vec<DiscoveredLocation>,
     pub imported: bool,
@@ -91,6 +92,7 @@ fn push_discovered(
         return;
     }
     let name = skill_metadata::infer_skill_name(&path);
+    let description = skill_metadata::infer_skill_description(&path);
     let fingerprint = content_hash::hash_directory(&path).ok();
     let found_at = std::fs::metadata(&path)
         .and_then(|m| m.modified())
@@ -103,6 +105,7 @@ fn push_discovered(
         tool: adapter_key.to_string(),
         found_path: path_str,
         name_guess: Some(name),
+        description,
         fingerprint,
         found_at,
         imported_skill_id: None,
@@ -211,6 +214,7 @@ pub fn group_discovered(records: &[DiscoveredSkillRecord]) -> Vec<DiscoveredGrou
         };
         let entry = groups.entry(group_key).or_insert_with(|| DiscoveredGroup {
             name,
+            description: rec.description.clone(),
             fingerprint: rec.fingerprint.clone(),
             locations: Vec::new(),
             imported: false,

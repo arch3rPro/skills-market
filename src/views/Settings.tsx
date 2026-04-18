@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { CustomSelect } from "../components/CustomSelect";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -1029,19 +1030,14 @@ export function Settings() {
                 <h3 className="text-[13px] text-secondary font-medium mb-0.5">{t("settings.defaultScenario")}</h3>
                 <p className="text-[13px] text-muted">{t("settings.defaultScenarioDesc")}</p>
               </div>
-              <div className="relative shrink-0">
-                <select
-                  value={defaultScenario}
-                  onChange={(e) => handleDefaultScenarioChange(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">—</option>
-                  {scenarios.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
-              </div>
+              <CustomSelect
+                value={defaultScenario}
+                onChange={handleDefaultScenarioChange}
+                options={[
+                  { value: "", label: "—" },
+                  ...scenarios.map((s) => ({ value: s.id, label: s.name })),
+                ]}
+              />
             </div>
 
             {/* Language */}
@@ -1051,18 +1047,15 @@ export function Settings() {
               </div>
               <div className="flex max-w-full flex-wrap items-center gap-2">
                 <Globe className="w-3.5 h-3.5 text-muted" />
-                <div className="relative">
-                  <select
-                    value={i18n.language}
-                    onChange={(e) => handleLanguageChange(e.target.value)}
-                    className={selectClass}
-                  >
-                    <option value="zh">简体中文 (zh-CN)</option>
-                    <option value="zh-TW">繁體中文 (zh-TW)</option>
-                    <option value="en">English (en-US)</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
-                </div>
+                <CustomSelect
+                  value={i18n.language}
+                  onChange={handleLanguageChange}
+                  options={[
+                    { value: "zh", label: "简体中文 (zh-CN)" },
+                    { value: "zh-TW", label: "繁體中文 (zh-TW)" },
+                    { value: "en", label: "English (en-US)" },
+                  ]}
+                />
               </div>
             </div>
 
