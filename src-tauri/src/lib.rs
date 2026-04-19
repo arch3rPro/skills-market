@@ -434,6 +434,9 @@ pub fn run() {
             commands::browse::fetch_leaderboard,
             commands::browse::search_skillssh,
             commands::browse::search_skillsmp,
+            commands::browse::search_clawhub,
+            commands::browse::fetch_clawhub_skills,
+            commands::browse::get_clawhub_skill_detail,
             // Settings
             commands::settings::get_settings,
             commands::settings::set_settings,

@@ -237,12 +237,24 @@
   "install": {
     "title": "安装 Skills",
     "browseMarket": "浏览榜单",
+    "clawhub": "ClawHub",
     "localInstall": "本地安装",
     "gitInstall": "Git 安装",
     "hot": "热门",
     "trending": "趋势",
     "all": "全部",
     "searchMarket": "搜索 skills.sh 市场...",
+    "searchClawhub": "搜索 ClawHub 市场...",
+    "clawhubSort": {
+      "updated": "最新",
+      "downloads": "下载量",
+      "stars": "收藏",
+      "trending": "趋势"
+    },
+    "clawhubMode": {
+      "browse": "正在浏览 ClawHub",
+      "search": "正在搜索 \"{{query}}\""
+    },
     "marketMode": {
       "hot": "正在浏览热门榜单",
       "trending": "正在浏览趋势榜单",
@@ -258,6 +270,14 @@
       "title": "没有找到匹配的市场 Skill",
       "description": "换一个关键词，或者清空来源筛选后再试。"
     },
+    "clawhubNoResults": {
+      "title": "没有找到匹配的 ClawHub Skill",
+      "description": "换一个关键词，或者尝试切换排序后再试。"
+    },
+    "clawhubEmpty": {
+      "title": "ClawHub 榜单为空",
+      "description": "请使用搜索模式查询技能相关信息。"
+    },
     "oneClickInstall": "一键安装",
     "viewOnWeb": "在 skills.sh 查看",
     "pagination": {
@@ -267,6 +287,7 @@
       "next": "下一页"
     },
     "loadMoreSearch": "加载更多结果",
+    "loadMore": "加载更多",
     "loadingMore": "正在加载更多...",
     "installing": "安装中...",
     "installed": "已安装",
@@ -276,6 +297,7 @@
       "installing": "正在安装 {{name}}...",
       "syncing": "正在同步到工具...",
       "success": "{{name}} 安装成功",
+      "failed": "{{name}} 安装失败：{{message}}",
       "done": "完成",
       "cancelled": "安装已取消",
       "timeout": "安装超时 — 请检查网络连接",
@@ -441,6 +463,10 @@
     "skillsmpApiKey": "API Key",
     "skillsmpDesc": "输入你的 SkillsMP API Key 以启用 AI 搜索。",
     "skillsmpGetKey": "获取 API Key",
+    "clawhubTitle": "ClawHub",
+    "clawhubApiKey": "API Key",
+    "clawhubDesc": "输入你的 ClawHub API Key 以启用技能搜索。",
+    "clawhubGetKey": "获取 API Key",
     "gitStartBackup": "开始备份",
     "gitStartHint": "填写远程地址会从远程克隆；留空则初始化本地仓库。",
     "gitNotInitialized": "尚未初始化",

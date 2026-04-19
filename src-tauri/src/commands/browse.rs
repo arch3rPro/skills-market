@@ -2,6 +2,7 @@ use std::sync::Arc;
 use tauri::State;
 
 use crate::core::{
+    clawhub_api::{self, SearchResult, SortType},
     error::AppError,
     skill_store::SkillStore,
     skillsmp_api,
@@ -76,6 +77,62 @@ pub async fn search_skillsmp(
     };
     tauri::async_runtime::spawn_blocking(move || {
         skillsmp_api::search(&api_key, &query, mode, page, limit, proxy_url.as_deref())
+            .map_err(AppError::network)
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn search_clawhub(
+    query: String,
+    limit: Option<usize>,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<Vec<SearchResult>, AppError> {
+    let api_key = store
+        .get_setting("clawhub_api_key")
+        .map_err(AppError::db)?;
+    let proxy_url = store.proxy_url();
+    let requested = limit.unwrap_or(60);
+    let bounded = requested.clamp(1, 200);
+    tauri::async_runtime::spawn_blocking(move || {
+        clawhub_api::search_skills(&query, bounded, api_key.as_deref(), proxy_url.as_deref())
+            .map_err(AppError::network)
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn fetch_clawhub_skills(
+    sort: String,
+    limit: Option<usize>,
+    cursor: Option<String>,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<clawhub_api::SkillsListResponse, AppError> {
+    let api_key = store
+        .get_setting("clawhub_api_key")
+        .map_err(AppError::db)?;
+    let proxy_url = store.proxy_url();
+    let sort_type = SortType::from_str(&sort);
+    let requested = limit.unwrap_or(60);
+    let bounded = requested.clamp(1, 200);
+    tauri::async_runtime::spawn_blocking(move || {
+        clawhub_api::fetch_skills(sort_type, bounded, cursor.as_deref(), api_key.as_deref(), proxy_url.as_deref())
+            .map_err(AppError::network)
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn get_clawhub_skill_detail(
+    slug: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<clawhub_api::ClawhubSkill, AppError> {
+    let api_key = store
+        .get_setting("clawhub_api_key")
+        .map_err(AppError::db)?;
+    let proxy_url = store.proxy_url();
+    tauri::async_runtime::spawn_blocking(move || {
+        clawhub_api::get_skill_detail(&slug, api_key.as_deref(), proxy_url.as_deref())
             .map_err(AppError::network)
     })
     .await?

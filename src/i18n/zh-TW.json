@@ -3,9 +3,9 @@
     "name": "Skills Manager"
   },
   "sidebar": {
-    "dashboard": "Dashboard",
-    "mySkills": "我的 Skills",
-    "installSkills": "安裝 Skills",
+    "dashboard": "數據看板",
+    "mySkills": "技能管理",
+    "installSkills": "技能商店",
     "scenarios": "場景",
     "newScenario": "新增場景",
     "projects": "專案工作區",
@@ -209,12 +209,24 @@
   "install": {
     "title": "安裝 Skills",
     "browseMarket": "瀏覽排行榜",
+    "clawhub": "ClawHub",
     "localInstall": "本機安裝",
     "gitInstall": "Git 安裝",
     "hot": "熱門",
     "trending": "趨勢",
     "all": "全部",
     "searchMarket": "搜尋 skills.sh 市集...",
+    "searchClawhub": "搜尋 ClawHub 市集...",
+    "clawhubSort": {
+      "updated": "最新",
+      "downloads": "下載量",
+      "stars": "收藏",
+      "trending": "趨勢"
+    },
+    "clawhubMode": {
+      "browse": "正在瀏覽 ClawHub",
+      "search": "正在搜尋 \"{{query}}\""
+    },
     "marketMode": {
       "hot": "正在瀏覽熱門排行榜",
       "trending": "正在瀏覽趨勢排行榜",
@@ -227,8 +239,16 @@
       "filteredCount": "當前已載入 {{count}} 筆結果"
     },
     "noResults": {
-      "title": "沒有找到符合的市集 Skill",
-      "description": "換一個關鍵字，或者清空來源篩選後再試。"
+      "title": "沒有找到匹配的市場 Skill",
+      "description": "換一個關鍵詞，或者清空來源篩選後再試。"
+    },
+    "clawhubNoResults": {
+      "title": "沒有找到匹配的 ClawHub Skill",
+      "description": "換一個關鍵詞，或者嘗試切換排序後再試。"
+    },
+    "clawhubEmpty": {
+      "title": "ClawHub 榜單為空",
+      "description": "請使用搜索模式查詢技能相關資訊。"
     },
     "oneClickInstall": "一鍵安裝",
     "viewOnWeb": "在 skills.sh 檢視",
@@ -239,6 +259,7 @@
       "next": "下一頁"
     },
     "loadMoreSearch": "載入更多結果",
+    "loadMore": "載入更多",
     "loadingMore": "正在載入更多...",
     "installing": "安裝中...",
     "installed": "已安裝",
@@ -248,6 +269,7 @@
       "installing": "正在安裝 {{name}}...",
       "syncing": "正在同步到工具...",
       "success": "{{name}} 安裝成功",
+      "failed": "{{name}} 安裝失敗：{{message}}",
       "done": "完成",
       "cancelled": "安裝已取消",
       "timeout": "安裝逾時 — 請檢查網路連線",
@@ -402,6 +424,10 @@
     "skillsmpApiKey": "API Key",
     "skillsmpDesc": "輸入你的 SkillsMP API Key 以啟用 AI 搜尋。",
     "skillsmpGetKey": "取得 API Key",
+    "clawhubTitle": "ClawHub",
+    "clawhubApiKey": "API Key",
+    "clawhubDesc": "輸入你的 ClawHub API Key 以啟用技能搜尋。",
+    "clawhubGetKey": "取得 API Key",
     "gitStartBackup": "開始備份",
     "gitStartHint": "填寫遠端位址會從遠端複製；留空則初始化本機倉庫。",
     "gitNotInitialized": "尚未初始化",

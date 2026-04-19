@@ -104,6 +104,30 @@ export interface SkillsShSkill {
   installs: number;
 }
 
+export interface ClawhubSkill {
+  slug: string;
+  displayName: string;
+  summary: string;
+  tags?: Record<string, unknown>;
+  stats?: Record<string, unknown>;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface ClawhubSearchResult {
+  score: number;
+  slug: string;
+  displayName: string;
+  summary: string;
+  version?: string;
+  updatedAt?: number;
+}
+
+export interface ClawhubSkillsListResponse {
+  items: ClawhubSkill[];
+  nextCursor: string | null;
+}
+
 export interface SyncHealth {
   in_sync: number;
   project_newer: number;
@@ -348,6 +372,26 @@ export const searchSkillsmp = (
     page: page ?? null,
     limit: limit ?? null,
   });
+
+export const searchClawhub = (query: string, limit?: number) =>
+  invoke<ClawhubSearchResult[]>("search_clawhub", {
+    query,
+    limit: limit ?? null,
+  });
+
+export const fetchClawhubSkills = (
+  sort: string,
+  limit?: number,
+  cursor?: string | null,
+) =>
+  invoke<ClawhubSkillsListResponse>("fetch_clawhub_skills", {
+    sort,
+    limit: limit ?? null,
+    cursor: cursor ?? null,
+  });
+
+export const getClawhubSkillDetail = (slug: string) =>
+  invoke<ClawhubSkill>("get_clawhub_skill_detail", { slug });
 
 // ── Settings ──
 

@@ -24,7 +24,8 @@ import { toast } from "sonner";
 import { cn } from "../utils";
 import { useApp } from "../context/AppContext";
 import * as api from "../lib/tauri";
-import type { ScanResult, SkillsShSkill, BatchImportResult, GitPreviewResult } from "../lib/tauri";
+import type { ScanResult, SkillsShSkill, BatchImportResult, GitPreviewResult, ClawhubSkill, ClawhubSearchResult } from "../lib/tauri";
+import { searchClawhub, fetchClawhubSkills, getClawhubSkillDetail } from "../lib/tauri";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -43,7 +44,7 @@ export function InstallSkills() {
   const { refreshScenarios, refreshManagedSkills, managedSkills, openSkillDetailById } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"market" | "local" | "git">("market");
+  const [activeTab, setActiveTab] = useState<"market" | "clawhub" | "local" | "git">("market");
   const [marketTab, setMarketTab] = useState<"hot" | "trending" | "alltime">("alltime");
   const [marketQuery, setMarketQuery] = useState("");
   const [marketSourceFilter, setMarketSourceFilter] = useState("all");
@@ -67,6 +68,18 @@ export function InstallSkills() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [aiSearch, setAiSearch] = useState(false);
   const [skillsmpApiKey, setSkillsmpApiKey] = useState<string | null>(null);
+  const [clawhubSort, setClawhubSort] = useState<"updated" | "downloads" | "stars" | "trending">("updated");
+  const [clawhubSkills, setClawhubSkills] = useState<ClawhubSkill[]>([]);
+  const [clawhubSearchResults, setClawhubSearchResults] = useState<ClawhubSearchResult[]>([]);
+  const [clawhubQuery, setClawhubQuery] = useState("");
+  const [_clawhubCursor, setClawhubCursor] = useState<string | null>(null);
+  const [clawhubLoading, setClawhubLoading] = useState(false);
+  const [_clawhubLoadingMore, setClawhubLoadingMore] = useState(false);
+  const [clawhubError, setClawhubError] = useState<string | null>(null);
+  const [_clawhubApiKey, setClawhubApiKey] = useState<string | null>(null);
+  const [clawhubSearchCache, setClawhubSearchCache] = useState<Map<string, { timestamp: number; data: ClawhubSearchResult[] }>>(new Map());
+  const [clawhubSearchLimit, setClawhubSearchLimit] = useState(MARKET_SEARCH_STEP);
+  const [clawhubSearchPage, setClawhubSearchPage] = useState(1);
   const marketListRef = useRef<HTMLDivElement | null>(null);
   const [sourceOverflowOpen, setSourceOverflowOpen] = useState(false);
   const [sourceOverflowSide, setSourceOverflowSide] = useState<"left" | "right">("left");
@@ -134,9 +147,88 @@ export function InstallSkills() {
       if (skill.source_type === "skillssh" && skill.source_ref) {
         set.add(skill.source_ref);
       }
+      if (skill.source_type === "clawhub" && skill.source_ref) {
+        set.add(skill.source_ref);
+      }
     }
     return set;
   }, [managedSkills]);
+
+
+
+  const searchClawhubSkills = useCallback(async (query: string) => {
+    if (query.trim().length === 0) {
+      setClawhubSearchResults([]);
+      setClawhubSearchLimit(MARKET_SEARCH_STEP);
+      setClawhubSearchPage(1);
+      return;
+    }
+    const cacheKey = `${query.trim().toLowerCase()}|${clawhubSearchLimit}`;
+    const cached = clawhubSearchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < MARKET_SEARCH_CACHE_TTL_MS) {
+      setClawhubSearchResults(cached.data);
+      setClawhubSearchPage(1);
+      setClawhubLoading(false);
+      return;
+    }
+    setClawhubLoading(true);
+    setClawhubError(null);
+    try {
+      // Step 1: Get search results
+      const searchResults = await searchClawhub(query, clawhubSearchLimit);
+      
+      // Step 2: Fetch details for each skill to get version, owner, stats
+      const enrichedResults: ClawhubSkill[] = [];
+      for (const result of searchResults) {
+        try {
+          const detail = await getClawhubSkillDetail(result.slug);
+          // Use detail API data (contains full info)
+          enrichedResults.push(detail as ClawhubSkill);
+        } catch {
+          // If detail fetch fails, use search result as fallback
+          enrichedResults.push({
+            slug: result.slug,
+            displayName: result.displayName,
+            summary: result.summary,
+            tags: result.version ? { latest: result.version } : undefined,
+          } as ClawhubSkill);
+        }
+      }
+
+      setClawhubSearchResults(enrichedResults as unknown as ClawhubSearchResult[]);
+      setClawhubSearchPage(1);
+      setClawhubSearchCache((prev) => {
+        const next = new Map(prev);
+        next.set(cacheKey, { timestamp: Date.now(), data: enrichedResults as unknown as ClawhubSearchResult[] });
+        if (next.size > 50) {
+          const oldest = Array.from(next.entries())
+            .sort((a, b) => a[1].timestamp - b[1].timestamp)[0];
+          if (oldest) next.delete(oldest[0]);
+        }
+        return next;
+      });
+      setClawhubCursor(null);
+    } catch (error) {
+      setClawhubError(getErrorMessage(error, "ClawHub search failed"));
+    } finally {
+      setClawhubLoading(false);
+    }
+  }, [clawhubSearchCache, clawhubSearchLimit]);
+
+  const handleClawhubInstall = useCallback(async (skill: ClawhubSkill | ClawhubSearchResult) => {
+    const slug = skill.slug;
+    const toastId = toast.loading(t("install.toast.installing", { name: slug }));
+    try {
+      const repoPath = `openclaw/${slug}`;
+      await api.installFromSkillssh(repoPath, `ClawHub: ${slug}`);
+      await refreshManagedSkills();
+      toast.success(t("install.toast.success", { name: slug }), { id: toastId });
+    } catch (error) {
+      toast.error(t("install.toast.failed", { name: slug, message: getErrorMessage(error, "Install failed") }), { id: toastId });
+    }
+  }, [refreshManagedSkills]);
+
+  // Market state
 
   const findInstalledByGitUrl = useCallback((url: string) => {
     const trimmed = url.trim().replace(/\.git$/, "").toLowerCase();
@@ -173,16 +265,17 @@ export function InstallSkills() {
 
   useEffect(() => {
     api.getSettings("skillsmp_api_key").then((v) => setSkillsmpApiKey(v || null));
+    api.getSettings("clawhub_api_key").then((v) => setClawhubApiKey(v || null));
   }, []);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "market" || tab === "local" || tab === "git") {
+    if (tab === "market" || tab === "clawhub" || tab === "local" || tab === "git") {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
-  const switchTab = (tab: "market" | "local" | "git") => {
+  const switchTab = (tab: "market" | "clawhub" | "local" | "git") => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -606,6 +699,27 @@ export function InstallSkills() {
   const hasMarketQuery = debouncedMarketQuery.trim().length > 0;
   const canLoadMoreSearch = hasMarketQuery && marketSkills.length >= marketSearchLimit;
   const isLoadingMoreSearch = hasMarketQuery && marketLoadingMore;
+
+  // ClawHub pagination
+  const clawhubDisplayList = clawhubSearchResults.length > 0 ? clawhubSearchResults : clawhubSkills;
+  const totalClawhubPages = Math.max(1, Math.ceil(clawhubDisplayList.length / MARKET_PAGE_SIZE));
+  const currentClawhubPage = Math.min(clawhubSearchPage, totalClawhubPages);
+  const clawhubPageStart = (currentClawhubPage - 1) * MARKET_PAGE_SIZE;
+  const paginatedClawhubSkills = clawhubDisplayList.slice(
+    clawhubPageStart,
+    clawhubPageStart + MARKET_PAGE_SIZE
+  );
+  const visibleClawhubPages = Array.from(
+    { length: totalClawhubPages },
+    (_, index) => index + 1
+  ).filter((page) => {
+    if (totalClawhubPages <= 7) return true;
+    if (page === 1 || page === totalClawhubPages) return true;
+    return Math.abs(page - currentClawhubPage) <= 1;
+  });
+  const hasClawhubQuery = clawhubQuery.trim().length > 0;
+  const canLoadMoreClawhubSearch = hasClawhubQuery && clawhubSearchResults.length >= clawhubSearchLimit;
+  const isLoadingMoreClawhubSearch = hasClawhubQuery && clawhubLoading;
   const overflowSources = sourceOptions.slice(visibleSourceCount);
   const filteredOverflowSources = sourceSearch
     ? overflowSources.filter((s) => s.toLowerCase().includes(sourceSearch.toLowerCase()))
@@ -633,6 +747,49 @@ export function InstallSkills() {
       ?.scrollIntoView({ block: "nearest" });
   }, [sourceFocusedIndex]);
 
+  // ClawHub effects
+  const fetchClawhubOnDemand = useCallback(async (newCursor?: string | null) => {
+    if (newCursor === undefined) {
+      setClawhubLoading(true);
+      setClawhubError(null);
+    } else {
+      setClawhubLoadingMore(true);
+    }
+    try {
+      const response = await fetchClawhubSkills(clawhubSort, 60, newCursor);
+      setClawhubSkills((prev) => {
+        if (newCursor) {
+          return [...prev, ...response.items];
+        }
+        return response.items;
+      });
+      setClawhubCursor(response.nextCursor);
+      setClawhubSearchResults([]);
+    } catch (error) {
+      setClawhubError(getErrorMessage(error, "ClawHub request failed"));
+    } finally {
+      setClawhubLoading(false);
+      setClawhubLoadingMore(false);
+    }
+  }, [clawhubSort]);
+
+  // Fetch ClawHub data only when switching to the tab
+  useEffect(() => {
+    if (activeTab === "clawhub" && clawhubQuery.trim().length === 0 && clawhubSkills.length === 0) {
+      fetchClawhubOnDemand();
+    }
+  }, [activeTab]); // Only trigger on tab switch, not on dependency changes
+
+  useEffect(() => {
+    if (activeTab !== "clawhub") return;
+    const handler = setTimeout(() => {
+      if (clawhubQuery.trim().length > 0) {
+        searchClawhubSkills(clawhubQuery);
+      }
+    }, MARKET_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handler);
+  }, [activeTab, clawhubQuery, searchClawhubSkills]);
+
   return (
     <div className="app-page gap-4">
       <div className="app-page-header border-b-0 pb-0">
@@ -640,6 +797,7 @@ export function InstallSkills() {
         <div className="flex gap-1 border-b border-border-subtle">
           {[
             { id: "market" as const, label: t("install.browseMarket"), icon: Box },
+            { id: "clawhub" as const, label: t("install.clawhub", { defaultValue: "ClawHub" }), icon: Star },
             { id: "local" as const, label: t("install.localInstall"), icon: UploadCloud },
             { id: "git" as const, label: t("install.gitInstall"), icon: Github },
           ].map((tab) => {
@@ -1123,6 +1281,270 @@ export function InstallSkills() {
                           <Search className="h-3.5 w-3.5" />
                         )}
                         {isLoadingMoreSearch
+                          ? t("install.loadingMore")
+                          : t("install.loadMoreSearch")}
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "clawhub" && (
+        <div className="animate-in fade-in duration-300">
+          <div className="app-panel mb-3 p-3.5">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center">
+                  {!hasClawhubQuery ? (
+                    <div className="app-segmented shrink-0 bg-background">
+                      {[
+                        { id: "updated" as const, label: t("install.clawhubSort.updated", { defaultValue: "Updated" }), icon: Clock },
+                        { id: "trending" as const, label: t("install.clawhubSort.trending", { defaultValue: "Trending" }), icon: TrendingUp },
+                        { id: "downloads" as const, label: t("install.clawhubSort.downloads", { defaultValue: "Downloads" }), icon: DownloadCloud },
+                        { id: "stars" as const, label: t("install.clawhubSort.stars", { defaultValue: "Stars" }), icon: Star },
+                      ].map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = clawhubSort === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => {
+                              setClawhubSort(tab.id);
+                              setClawhubCursor(null);
+                              setClawhubSkills([]);
+                            }}
+                            className={cn(
+                              "app-segmented-button flex items-center gap-1.5",
+                              isActive && "app-segmented-button-active"
+                            )}
+                          >
+                            <Icon className="h-3 w-3" />
+                            {tab.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  <div className="relative flex-1 lg:max-w-[640px]">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                    <input
+                      type="text"
+                      value={clawhubQuery}
+                      onChange={(e) => {
+                        setClawhubQuery(e.target.value);
+                        setClawhubSearchLimit(MARKET_SEARCH_STEP);
+                      }}
+                      placeholder={t("install.searchClawhub", { defaultValue: "搜索 ClawHub 市场..." })}
+                      className="app-input w-full bg-background pl-9"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {clawhubError ? (
+            <div className="mb-4">
+              <StatusBanner
+                compact
+                title={t("common.requestFailed")}
+                description={clawhubError}
+                actionLabel={t("common.retry")}
+                onAction={() => {
+                  setClawhubError(null);
+                  setClawhubQuery("");
+                  fetchClawhubOnDemand();
+                }}
+                tone="danger"
+              />
+            </div>
+          ) : null}
+
+          {clawhubLoading && clawhubDisplayList.length === 0 ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-5 w-5 animate-spin text-muted" />
+            </div>
+          ) : (
+            <div className="pb-8">
+              {paginatedClawhubSkills.length === 0 && clawhubDisplayList.length === 0 && clawhubQuery.trim().length === 0 ? (
+                <div className="app-panel flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-muted">
+                    <DownloadCloud className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-[14px] font-semibold text-secondary">
+                    {t("install.clawhubEmpty.title", { defaultValue: "ClawHub 榜单为空" })}
+                  </h3>
+                  <p className="mt-1 max-w-md text-[13px] text-muted">
+                    {t("install.clawhubEmpty.description", { defaultValue: "请稍后再试或换一个排序方式。" })}
+                  </p>
+                </div>
+              ) : paginatedClawhubSkills.length === 0 && clawhubDisplayList.length > 0 ? (
+                <div className="app-panel flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-background text-muted">
+                    <Search className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-[14px] font-semibold text-secondary">
+                    {t("install.noResults.title")}
+                  </h3>
+                  <p className="mt-1 max-w-md text-[13px] text-muted">
+                    {t("install.noResults.description")}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
+                    {paginatedClawhubSkills.map((skill, index) => {
+                      const slug = skill.slug;
+                      const displayName = skill.displayName;
+                      const isInstalled = installedSourceRefs.has(`clawhub/${slug}`);
+                      
+                      // Extract version from tags.latest (API returns this in detail)
+                      const version = (skill as { tags?: { latest?: string } }).tags?.latest;
+                      
+                      // Extract downloads from stats.downloads
+                      const downloads = (skill as { stats?: { downloads?: number } }).stats?.downloads;
+
+                      return (
+                        <div
+                          key={`${slug}-${index}`}
+                          className="app-panel flex flex-col gap-2 p-3 transition-colors hover:border-border"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-accent-bg text-[11px] font-bold text-accent-light uppercase">
+                                {displayName.charAt(0)}
+                              </div>
+                              <div className="min-w-0">
+                                <h3 className="truncate text-[13px] font-semibold text-secondary">
+                                  {displayName}
+                                </h3>
+                              </div>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-1">
+                              {isInstalled ? (
+                                <span
+                                  className="rounded-[5px] border border-emerald-500/20 bg-emerald-500/10 p-1 text-emerald-400"
+                                  title={t("install.installed")}
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleClawhubInstall(skill)}
+                                  disabled={installing !== null}
+                                  className="rounded-[5px] border border-accent-border bg-accent-dark p-1 text-white transition-colors hover:bg-accent disabled:opacity-50"
+                                  title={t("install.oneClickInstall")}
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span
+                              className="rounded-[5px] bg-accent-bg px-1.5 py-0.5 text-[13px] leading-4 font-medium text-accent-light"
+                            >
+                              @{slug.split("/")[0] || "clawhub"}
+                            </span>
+                            {version && (
+                              <span className="rounded-[5px] bg-accent-bg px-1.5 py-0.5 text-[13px] leading-4 font-medium text-accent-light">
+                                v{version}
+                              </span>
+                            )}
+                            {downloads !== undefined && downloads > 0 && (
+                              <span className="inline-flex items-center gap-1 rounded-[5px] border border-border-subtle bg-background px-1.5 py-0.5 text-[13px] leading-4 text-muted">
+                                <DownloadCloud className="h-3 w-3" />
+                                {downloads >= 1_000_000
+                                  ? `${(downloads / 1_000_000).toFixed(1)}M`
+                                  : downloads >= 1_000
+                                    ? `${(downloads / 1_000).toFixed(1)}K`
+                                    : downloads}
+                              </span>
+                            )}
+                            {isInstalled ? (
+                              <span className="inline-flex items-center gap-1 rounded-[5px] border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[13px] leading-4 font-medium text-emerald-400">
+                                <Check className="h-3 w-3" />
+                                {t("install.installed")}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <p className="line-clamp-2 text-[13px] leading-4 text-muted">
+                            {skill.summary}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {totalClawhubPages > 1 && !hasClawhubQuery ? (
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5">
+                      <button
+                        onClick={() => setClawhubSearchPage(Math.max(1, currentClawhubPage - 1))}
+                        disabled={currentClawhubPage === 1}
+                        className="inline-flex items-center gap-1 rounded-[6px] border border-border-subtle bg-surface px-3 py-1.5 text-[13px] font-medium text-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        {t("install.pagination.previous")}
+                      </button>
+
+                      {visibleClawhubPages.map((page, index) => {
+                        const previousPage = visibleClawhubPages[index - 1];
+                        const showGap = previousPage && page - previousPage > 1;
+
+                        return (
+                          <div key={page} className="flex items-center gap-1.5">
+                            {showGap ? <span className="px-1 text-[13px] text-faint">...</span> : null}
+                            <button
+                              onClick={() => setClawhubSearchPage(page)}
+                              className={cn(
+                                "min-w-8 rounded-[6px] border px-2.5 py-1.5 text-[13px] font-semibold transition-colors",
+                                page === currentClawhubPage
+                                  ? "border-accent-border bg-accent-dark text-white"
+                                  : "border-border-subtle bg-surface text-secondary hover:bg-surface-hover"
+                              )}
+                            >
+                              {page}
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      <button
+                        onClick={() => setClawhubSearchPage(Math.min(totalClawhubPages, currentClawhubPage + 1))}
+                        disabled={currentClawhubPage === totalClawhubPages}
+                        className="inline-flex items-center gap-1 rounded-[6px] border border-border-subtle bg-surface px-3 py-1.5 text-[13px] font-medium text-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
+                      >
+                        {t("install.pagination.next")}
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {hasClawhubQuery ? (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setClawhubSearchLimit((value) => value + MARKET_SEARCH_STEP)}
+                        disabled={!canLoadMoreClawhubSearch || clawhubLoading}
+                        className="inline-flex items-center gap-2 rounded-[6px] border border-border-subtle bg-surface px-3.5 py-2 text-[13px] font-medium text-secondary transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {clawhubLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Search className="h-3.5 w-3.5" />
+                        )}
+                        {isLoadingMoreClawhubSearch
                           ? t("install.loadingMore")
                           : t("install.loadMoreSearch")}
                       </button>

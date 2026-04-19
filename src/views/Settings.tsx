@@ -100,6 +100,8 @@ export function Settings() {
   const [textSize, setTextSize] = useState("default");
   const [skillsmpApiKey, setSkillsmpApiKey] = useState("");
   const [skillsmpSaving, setSkillsmpSaving] = useState(false);
+  const [clawhubApiKey, setClawhubApiKey] = useState("");
+  const [clawhubSaving, setClawhubSaving] = useState(false);
   // Agent path editing
   const [editingPathKey, setEditingPathKey] = useState<string | null>(null);
   const [editingPathValue, setEditingPathValue] = useState("");
@@ -210,6 +212,7 @@ export function Settings() {
     });
     api.getSettings("text_size").then((v) => { if (v) { setTextSize(v); applyTextSize(v); } });
     api.getSettings("skillsmp_api_key").then((v) => { if (v) setSkillsmpApiKey(v); });
+    api.getSettings("clawhub_api_key").then((v) => { if (v) setClawhubApiKey(v); });
     api.getCentralRepoPath().then((path) => {
       setCentralRepoPath(path);
       setCentralRepoPathInput(path);
@@ -421,6 +424,18 @@ export function Settings() {
     }
   };
 
+  const handleSaveClawhubApiKey = async () => {
+    setClawhubSaving(true);
+    try {
+      await api.setSettings("clawhub_api_key", clawhubApiKey.trim());
+      toast.success(t("common.success"));
+    } catch {
+      toast.error(t("common.error"));
+    } finally {
+      setClawhubSaving(false);
+    }
+  };
+
   const handleSaveGitRemote = async () => {
     setGitRemoteSaving(true);
     try {
@@ -452,7 +467,7 @@ export function Settings() {
 
   const fieldClass =
     "h-8 rounded-[4px] border border-border-subtle bg-background px-2.5 text-[13px] text-secondary outline-none transition-colors focus:border-border";
-  const selectClass = `${fieldClass} min-w-[180px] appearance-none pr-8`;
+  // const selectClass = `${fieldClass} min-w-[180px] appearance-none pr-8`;
   const actionButtonClass =
     "inline-flex h-8 items-center gap-1.5 rounded-[4px] border px-2.5 text-[13px] font-medium transition-colors outline-none disabled:opacity-60";
   const segmentedButtonClass =
@@ -1183,6 +1198,50 @@ export function Settings() {
                   className={`${actionButtonClass} bg-surface-hover hover:bg-surface-active text-tertiary border-border`}
                 >
                   {skillsmpSaving ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Key className="w-3 h-3" />
+                  )}
+                  {t("common.save")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ClawHub config */}
+        <section>
+          <h2 className="app-section-title mb-3">
+            {t("settings.clawhubTitle", { defaultValue: "ClawHub" })}
+          </h2>
+          <div className="app-panel overflow-hidden divide-y divide-border-subtle">
+            <div className="px-4 py-3">
+              <h3 className="text-[13px] text-secondary font-medium mb-0.5">{t("settings.clawhubApiKey", { defaultValue: "API Key" })}</h3>
+              <p className="text-[13px] text-muted mb-2">
+                {t("settings.clawhubDesc", { defaultValue: "Enter your ClawHub API key to enable skill search." })}{" "}
+                <button
+                  type="button"
+                  onClick={() => openUrl("https://clawhub.ai")}
+                  className="inline-flex items-center gap-0.5 text-accent-light hover:underline"
+                >
+                  {t("settings.clawhubGetKey", { defaultValue: "Get your API key" })}
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="password"
+                  value={clawhubApiKey}
+                  onChange={(e) => setClawhubApiKey(e.target.value)}
+                  placeholder="sk_live_..."
+                  className={`${fieldClass} min-w-0 flex-1 font-mono`}
+                />
+                <button
+                  onClick={handleSaveClawhubApiKey}
+                  disabled={clawhubSaving}
+                  className={`${actionButtonClass} bg-surface-hover hover:bg-surface-active text-tertiary border-border`}
+                >
+                  {clawhubSaving ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
                     <Key className="w-3 h-3" />

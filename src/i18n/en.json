@@ -4,8 +4,8 @@
   },
   "sidebar": {
     "dashboard": "Dashboard",
-    "mySkills": "My Skills",
-    "installSkills": "Install Skills",
+    "mySkills": "Skills Management",
+    "installSkills": "Skills Store",
     "scenarios": "Scenarios",
     "newScenario": "New Scenario",
     "projects": "Project Workspaces",
@@ -237,12 +237,24 @@
   "install": {
     "title": "Install Skills",
     "browseMarket": "Leaderboard",
+    "clawhub": "ClawHub",
     "localInstall": "Local Install",
     "gitInstall": "Git Install",
     "hot": "Hot",
     "trending": "Trending",
     "all": "All Time",
     "searchMarket": "Search skills.sh market...",
+    "searchClawhub": "Search ClawHub market...",
+    "clawhubSort": {
+      "updated": "Updated",
+      "downloads": "Downloads",
+      "stars": "Stars",
+      "trending": "Trending"
+    },
+    "clawhubMode": {
+      "browse": "Browsing ClawHub",
+      "search": "Searching \"{{query}}\""
+    },
     "marketMode": {
       "hot": "Viewing the hot leaderboard",
       "trending": "Viewing trending leaderboard",
@@ -255,8 +267,16 @@
       "filteredCount": "{{count}} loaded results"
     },
     "noResults": {
-      "title": "No matching market skills",
-      "description": "Try another keyword or clear the source filter."
+      "title": "No matching market skills found",
+      "description": "Try a different keyword or clear the source filter."
+    },
+    "clawhubNoResults": {
+      "title": "No matching ClawHub skills found",
+      "description": "Try a different keyword or switch the sort order."
+    },
+    "clawhubEmpty": {
+      "title": "ClawHub list is empty",
+      "description": "Please use search to find skills."
     },
     "oneClickInstall": "Install",
     "viewOnWeb": "View on skills.sh",
@@ -267,6 +287,7 @@
       "next": "Next"
     },
     "loadMoreSearch": "Load more results",
+    "loadMore": "Load more",
     "loadingMore": "Loading more...",
     "installing": "Installing...",
     "installed": "Installed",
@@ -276,6 +297,7 @@
       "installing": "Installing {{name}}...",
       "syncing": "Syncing to tools...",
       "success": "{{name}} installed successfully",
+      "failed": "Failed to install {{name}}: {{message}}",
       "done": "Done",
       "cancelled": "Installation cancelled",
       "timeout": "Installation timed out — check your network",
@@ -441,6 +463,10 @@
     "skillsmpApiKey": "API Key",
     "skillsmpDesc": "Enter your SkillsMP API key to enable AI-powered skill search.",
     "skillsmpGetKey": "Get your API key",
+    "clawhubTitle": "ClawHub",
+    "clawhubApiKey": "API Key",
+    "clawhubDesc": "Enter your ClawHub API key to enable skill search.",
+    "clawhubGetKey": "Get your API key",
     "gitStartBackup": "Start Backup",
     "gitStartHint": "If Remote URL is filled, it will clone from remote; otherwise it initializes a local repository.",
     "gitNotInitialized": "Not initialized",
