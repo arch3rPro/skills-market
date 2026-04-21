@@ -402,6 +402,7 @@
     "overridePathHint": "当前使用手动覆盖的 skills 路径",
     "customAgentAdded": "自定义 Agent 已添加",
     "customAgentRemoved": "自定义 Agent 已移除",
+    "independentSyncMode": "独立同步模式",
     "selectFolder": "选择",
     "addAgent": "添加",
     "globalConfig": "全局配置",

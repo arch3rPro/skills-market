@@ -212,6 +212,12 @@ export const addCustomTool = (
 export const removeCustomTool = (key: string) =>
   invoke<void>("remove_custom_tool", { key });
 
+export const getCustomToolSyncMode = (key: string) =>
+  invoke<string>("get_custom_tool_sync_mode", { key });
+
+export const setCustomToolSyncMode = (key: string, mode: string) =>
+  invoke<void>("set_custom_tool_sync_mode", { key, mode });
+
 // ── Skills ──
 
 export const getManagedSkills = () =>

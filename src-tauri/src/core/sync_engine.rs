@@ -13,7 +13,7 @@ pub(crate) fn ensure_dst_not_inside_src(src: &Path, dst: &Path) -> Result<()> {
         let name = dst.file_name()?;
         Some(parent.join(name))
     });
-    if let Some(dst_canon) = dst_canon {
+    if let Some(dst_canon) = &dst_canon {
         if dst_canon.starts_with(&src_canon) {
             anyhow::bail!(
                 "Destination {:?} is inside source {:?}; refusing to copy to avoid infinite recursion",
@@ -57,10 +57,12 @@ pub fn sync_skill(source: &Path, target: &Path, mode: SyncMode) -> Result<SyncMo
             .with_context(|| format!("Failed to create parent dir {:?}", parent))?;
     }
 
-    ensure_dst_not_inside_src(source, target)?;
-
-    // Remove existing target
+    // Remove existing target (including symlinks) before checking paths
     remove_target(target).ok();
+
+    // After removing the target, check for path conflicts
+    // This prevents issues when the target was a symlink pointing inside source
+    ensure_dst_not_inside_src(source, target)?;
 
     match mode {
         SyncMode::Symlink => {

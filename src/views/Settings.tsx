@@ -112,6 +112,10 @@ export function Settings() {
   const [customProjectPath, setCustomProjectPath] = useState("");
   const [addingCustom, setAddingCustom] = useState(false);
   const [showMoreAgents, setShowMoreAgents] = useState(false);
+  // Custom agent sync mode
+  const [syncModeKey, setSyncModeKey] = useState<string | null>(null);
+  const [savingSyncMode, setSavingSyncMode] = useState(false);
+  const [customToolSyncModes, setCustomToolSyncModes] = useState<Map<string, string>>(new Map());
 
   const GITHUB_URL = "https://github.com/xingkongliang/skills-manager";
 
@@ -201,6 +205,22 @@ export function Settings() {
     }
   };
 
+  const handleToggleCustomAgentSyncMode = async (key: string, newMode: string) => {
+    setSyncModeKey(key);
+    setSavingSyncMode(true);
+    try {
+      await api.setCustomToolSyncMode(key, newMode);
+      // Update local state immediately for responsive UI
+      setCustomToolSyncModes((prev) => new Map(prev).set(key, newMode));
+      toast.success(t("common.success"));
+    } catch {
+      toast.error(t("common.error"));
+    } finally {
+      setSyncModeKey(null);
+      setSavingSyncMode(false);
+    }
+  };
+
   useEffect(() => {
     api.getSettings("sync_mode").then((v) => { if (v) setSyncMode(v); });
     api.getSettings("default_scenario").then((v) => { if (v) setDefaultScenario(v); });
@@ -235,6 +255,24 @@ export function Settings() {
       }
     })();
   }, []);
+
+  // Load custom tool sync modes
+  useEffect(() => {
+    const loadCustomToolSyncModes = async () => {
+      const customAgents = tools.filter((tool) => tool.is_custom);
+      const modes = new Map<string, string>();
+      for (const agent of customAgents) {
+        try {
+          const mode = await api.getCustomToolSyncMode(agent.key);
+          modes.set(agent.key, mode);
+        } catch {
+          modes.set(agent.key, "symlink");
+        }
+      }
+      setCustomToolSyncModes(modes);
+    };
+    loadCustomToolSyncModes();
+  }, [tools]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -508,164 +546,202 @@ export function Settings() {
     ? compactHomePath(centralRepoPath)
     : t("common.loading");
 
-  const renderAgentCard = (agent: typeof tools[number]) => (
-    <div
-      key={agent.key}
-      className={cn(
-        "group relative flex flex-col gap-1.5 rounded-[6px] border px-3 py-2.5 transition-colors",
-        agent.installed && agent.enabled
-          ? "border-border bg-surface"
-          : agent.installed
-            ? "border-border-subtle bg-surface"
-            : "border-border-subtle bg-bg-secondary"
-      )}
-    >
-      <div className="flex items-start gap-2">
-        <div className="mt-0.5 shrink-0">
-          {agent.installed ? (
-            <button
-              onClick={() => handleToggleTool(agent.key, !agent.enabled)}
-              disabled={togglingTools.has(agent.key)}
-              className="shrink-0 outline-none"
-              title={agent.enabled ? t("settings.disableAgent") : t("settings.enableAgent")}
-            >
-              {togglingTools.has(agent.key) ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
-              ) : agent.enabled ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              ) : (
-                <Circle className="h-3.5 w-3.5 text-amber-500" />
-              )}
-            </button>
-          ) : (
-            <Circle className="h-3.5 w-3.5 text-faint" />
-          )}
-        </div>
+  const renderAgentCard = (agent: typeof tools[number]) => {
+    const customSyncMode = customToolSyncModes.get(agent.key);
+    const isSyncingMode = syncModeKey === agent.key;
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className={cn("truncate text-[13px] font-medium", agent.installed ? "text-secondary" : "text-muted")}>
-                  {agent.display_name}
-                </h3>
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                    agent.installed
+    return (
+      <div
+        key={agent.key}
+        className={cn(
+          "group relative flex flex-col gap-1.5 rounded-[6px] border px-3 py-2.5 transition-colors",
+          agent.installed && agent.enabled
+            ? "border-border bg-surface"
+            : agent.installed
+              ? "border-border-subtle bg-surface"
+              : "border-border-subtle bg-bg-secondary"
+        )}
+      >
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 shrink-0">
+            {agent.installed ? (
+              <button
+                onClick={() => handleToggleTool(agent.key, !agent.enabled)}
+                disabled={togglingTools.has(agent.key)}
+                className="shrink-0 outline-none"
+                title={agent.enabled ? t("settings.disableAgent") : t("settings.enableAgent")}
+              >
+                {togglingTools.has(agent.key) ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
+                ) : agent.enabled ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <Circle className="h-3.5 w-3.5 text-amber-500" />
+                )}
+              </button>
+            ) : (
+              <Circle className="h-3.5 w-3.5 text-faint" />
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className={cn("truncate text-[13px] font-medium", agent.installed ? "text-secondary" : "text-muted")}>
+                    {agent.display_name}
+                  </h3>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                      agent.installed
+                        ? agent.enabled
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                        : "bg-surface-hover text-muted"
+                    )}
+                  >
+                    {agent.installed
                       ? agent.enabled
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                      : "bg-surface-hover text-muted"
-                  )}
+                        ? t("settings.enabledState")
+                        : t("settings.disabledState")
+                      : t("settings.notInstalled")}
+                  </span>
+                </div>
+              </div>
+              <div className="hidden shrink-0 items-center gap-0.5 group-hover:flex">
+                {agent.has_path_override && !agent.is_custom && (
+                  <button
+                    onClick={() => handleResetPath(agent.key)}
+                    className="p-0.5 text-muted hover:text-amber-500 outline-none"
+                    title={t("settings.resetPath")}
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </button>
+                )}
+                <button
+                  onClick={() => startEditPath(agent.key, agent.skills_dir)}
+                  className="p-0.5 text-muted hover:text-accent outline-none"
+                  title={t("settings.editPath")}
                 >
-                  {agent.installed
-                    ? agent.enabled
-                      ? t("settings.enabledState")
-                      : t("settings.disabledState")
-                    : t("settings.notInstalled")}
-                </span>
+                  <Pencil className="h-3 w-3" />
+                </button>
+                {agent.is_custom && (
+                  <button
+                    onClick={() => handleRemoveCustomAgent(agent.key, agent.display_name)}
+                    className="p-0.5 text-muted hover:text-red-500 outline-none"
+                    title={t("settings.removeCustomAgent")}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
               </div>
             </div>
-            <div className="hidden shrink-0 items-center gap-0.5 group-hover:flex">
-              {agent.has_path_override && !agent.is_custom && (
-                <button
-                  onClick={() => handleResetPath(agent.key)}
-                  className="p-0.5 text-muted hover:text-amber-500 outline-none"
-                  title={t("settings.resetPath")}
-                >
-                  <RotateCcw className="h-3 w-3" />
-                </button>
-              )}
-              <button
-                onClick={() => startEditPath(agent.key, agent.skills_dir)}
-                className="p-0.5 text-muted hover:text-accent outline-none"
-                title={t("settings.editPath")}
-              >
-                <Pencil className="h-3 w-3" />
-              </button>
+
+            <div className="mt-0.5 flex flex-wrap items-center gap-1">
               {agent.is_custom && (
-                <button
-                  onClick={() => handleRemoveCustomAgent(agent.key, agent.display_name)}
-                  className="p-0.5 text-muted hover:text-red-500 outline-none"
-                  title={t("settings.removeCustomAgent")}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+                <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
+                  {t("settings.customAgent")}
+                </span>
+              )}
+              {agent.is_custom && agent.project_relative_skills_dir && (
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                  {t("settings.projectAgentSupported")}
+                </span>
+              )}
+              {agent.has_path_override && !agent.is_custom && (
+                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                  {t("settings.pathOverridden")}
+                </span>
               )}
             </div>
           </div>
+        </div>
 
-          <div className="mt-0.5 flex flex-wrap items-center gap-1">
-            {agent.is_custom && (
-              <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
-                {t("settings.customAgent")}
-              </span>
-            )}
+        {editingPathKey === agent.key ? (
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              value={editingPathValue}
+              onChange={(e) => setEditingPathValue(e.target.value)}
+              className="h-7 min-w-0 flex-1 rounded border border-border-subtle bg-background px-1.5 text-[12px] font-mono text-secondary outline-none focus:border-accent"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSavePath();
+                if (e.key === "Escape") setEditingPathKey(null);
+              }}
+            />
+            <button
+              onClick={() => handleBrowsePath(setEditingPathValue)}
+              className="shrink-0 p-1 text-muted hover:text-accent outline-none"
+              title={t("settings.selectFolder")}
+            >
+              <FolderOpen className="h-3 w-3" />
+            </button>
+            <button
+              onClick={handleSavePath}
+              className="shrink-0 p-1 text-emerald-500 hover:text-emerald-400 outline-none"
+            >
+              <Check className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => setEditingPathKey(null)}
+              className="shrink-0 p-1 text-muted hover:text-secondary outline-none"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <p className="truncate text-[12px] font-mono leading-tight text-muted" title={agent.skills_dir}>
+              {agent.installed ? compactHomePath(agent.skills_dir) : t("settings.notInstalled")}
+            </p>
             {agent.is_custom && agent.project_relative_skills_dir && (
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-                {t("settings.projectAgentSupported")}
-              </span>
+              <p
+                className="truncate text-[12px] font-mono leading-tight text-muted"
+                title={agent.project_relative_skills_dir}
+              >
+                {t("settings.projectSkillsPathValue", { path: agent.project_relative_skills_dir })}
+              </p>
             )}
-            {agent.has_path_override && !agent.is_custom && (
-              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
-                {t("settings.pathOverridden")}
-              </span>
+            {agent.is_custom && (
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-[11px] text-muted">{t("settings.independentSyncMode")}:</span>
+                <div className="flex rounded-[3px] border border-border-subtle bg-background p-px">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleCustomAgentSyncMode(agent.key, "symlink")}
+                    disabled={isSyncingMode}
+                    className={cn(
+                      segmentedButtonClass,
+                      "h-6 px-2 text-[11px]",
+                      !isSyncingMode && customSyncMode === "symlink" ? "bg-surface-active text-secondary" : "text-muted hover:text-tertiary",
+                      isSyncingMode && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <LinkIcon className="h-2.5 w-2.5" /> {t("settings.symlink")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleCustomAgentSyncMode(agent.key, "copy")}
+                    disabled={isSyncingMode}
+                    className={cn(
+                      segmentedButtonClass,
+                      "h-6 px-2 text-[11px]",
+                      !isSyncingMode && customSyncMode === "copy" ? "bg-surface-active text-secondary" : "text-muted hover:text-tertiary",
+                      isSyncingMode && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <Copy className="h-2.5 w-2.5" /> {t("settings.copy")}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
-
-      {editingPathKey === agent.key ? (
-        <div className="flex items-center gap-1">
-          <input
-            type="text"
-            value={editingPathValue}
-            onChange={(e) => setEditingPathValue(e.target.value)}
-            className="h-7 min-w-0 flex-1 rounded border border-border-subtle bg-background px-1.5 text-[12px] font-mono text-secondary outline-none focus:border-accent"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSavePath();
-              if (e.key === "Escape") setEditingPathKey(null);
-            }}
-          />
-          <button
-            onClick={() => handleBrowsePath(setEditingPathValue)}
-            className="shrink-0 p-1 text-muted hover:text-accent outline-none"
-            title={t("settings.selectFolder")}
-          >
-            <FolderOpen className="h-3 w-3" />
-          </button>
-          <button
-            onClick={handleSavePath}
-            className="shrink-0 p-1 text-emerald-500 hover:text-emerald-400 outline-none"
-          >
-            <Check className="h-3 w-3" />
-          </button>
-          <button
-            onClick={() => setEditingPathKey(null)}
-            className="shrink-0 p-1 text-muted hover:text-secondary outline-none"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          <p className="truncate text-[12px] font-mono leading-tight text-muted" title={agent.skills_dir}>
-            {agent.installed ? compactHomePath(agent.skills_dir) : t("settings.notInstalled")}
-          </p>
-          {agent.is_custom && agent.project_relative_skills_dir && (
-            <p
-              className="truncate text-[12px] font-mono leading-tight text-muted"
-              title={agent.project_relative_skills_dir}
-            >
-              {t("settings.projectSkillsPathValue", { path: agent.project_relative_skills_dir })}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="app-page app-page-narrow">

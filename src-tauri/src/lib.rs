@@ -398,6 +398,8 @@ pub fn run() {
             commands::tools::reset_custom_tool_path,
             commands::tools::add_custom_tool,
             commands::tools::remove_custom_tool,
+            commands::tools::get_custom_tool_sync_mode,
+            commands::tools::set_custom_tool_sync_mode,
             // Skills
             commands::skills::get_managed_skills,
             commands::skills::get_skills_for_scenario,

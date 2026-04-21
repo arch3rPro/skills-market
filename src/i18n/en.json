@@ -402,6 +402,7 @@
     "overridePathHint": "Using a manually overridden skills path",
     "customAgentAdded": "Custom agent added",
     "customAgentRemoved": "Custom agent removed",
+    "independentSyncMode": "Independent Sync Mode",
     "selectFolder": "Select",
     "addAgent": "Add",
     "globalConfig": "Global Configuration",

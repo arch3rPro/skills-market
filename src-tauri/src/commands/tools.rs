@@ -131,7 +131,6 @@ fn sync_active_scenario_to_tool(store: &SkillStore, tool_key: &str) {
         Some(a) if a.is_installed() => a,
         _ => return,
     };
-    let configured_mode = store.get_setting("sync_mode").ok().flatten();
     for skill in &skills {
         let allowed_adapters =
             match enabled_installed_adapters_for_scenario_skill(store, &active_id, &skill.id) {
@@ -146,7 +145,14 @@ fn sync_active_scenario_to_tool(store: &SkillStore, tool_key: &str) {
         }
         let source = PathBuf::from(&skill.central_path);
         let target = adapter.skills_dir().join(&skill.name);
-        let mode = sync_engine::sync_mode_for_tool(&adapter.key, configured_mode.as_deref());
+        
+        // Check for custom tool sync mode override first, then fall back to global sync_mode
+        let custom_mode_key = format!("custom_tool_sync_mode:{}", tool_key);
+        let effective_mode = store.get_setting(&custom_mode_key)
+            .ok()
+            .flatten()
+            .or_else(|| store.get_setting("sync_mode").ok().flatten());
+        let mode = sync_engine::sync_mode_for_tool(&adapter.key, effective_mode.as_deref());
         match sync_engine::sync_skill(&source, &target, mode) {
             Ok(actual_mode) => {
                 let now = chrono::Utc::now().timestamp_millis();
@@ -500,4 +506,44 @@ pub fn migrate_legacy_tool_keys(store: &SkillStore) -> Result<(), AppError> {
         log::info!("Migrated legacy tool key {OLD_KEY} -> {NEW_KEY}");
     }
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_custom_tool_sync_mode(
+    key: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<String, AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let setting_key = format!("custom_tool_sync_mode:{}", key);
+        let mode = store.get_setting(&setting_key).ok().flatten();
+        Ok(mode.unwrap_or_else(|| "symlink".to_string()))
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn set_custom_tool_sync_mode(
+    key: String,
+    mode: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<(), AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let setting_key = format!("custom_tool_sync_mode:{}", key);
+        store.set_setting(&setting_key, &mode).map_err(AppError::db)?;
+        
+        // Re-sync active scenario skills to this tool with the new mode
+        let adapter = tool_adapters::find_adapter_with_store(&store, &key)
+            .ok_or_else(|| AppError::not_found(format!("Unknown tool: {}", key)))?;
+        
+        // Only re-sync if the tool is enabled and installed
+        let disabled = get_disabled_tools(&store);
+        if !disabled.contains(&key) && adapter.is_installed() {
+            sync_active_scenario_to_tool(&store, &key);
+        }
+        
+        Ok(())
+    })
+    .await?
 }
