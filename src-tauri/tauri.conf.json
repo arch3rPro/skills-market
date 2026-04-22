@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "skills-manager",
-  "version": "1.14.1",
+  "version": "1.20.1",
   "identifier": "com.agentskills.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -32,7 +32,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERBRUYwMTBDOEQ3MDdEODAKUldTQWZYQ05EQUh2Mm0wNDZtNm5VYWJpbjRaZVJQRUhrQ2tkOXc3MHBWZ2VaREo0OVd3WEU3d0oK",
       "endpoints": [
-        "https://github.com/xingkongliang/skills-manager/releases/latest/download/latest.json"
+        "https://github.com/arch3rPro/Skills-Manager-Plus/releases/latest/download/latest.json"
       ]
     }
   },

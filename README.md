@@ -16,6 +16,8 @@
   <a href="https://buymeacoffee.com/jaytl">Buy me a coffee</a>
 </p>
 
+> **Note**: This is a fork based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) with additional features and improvements.
+
 <p align="center">
   <img src="assets/demo.gif" width="800" alt="Skills Manager Demo" />
 </p>
@@ -42,14 +44,41 @@
 - **Multi-tool sync** — Sync skills to any supported tool via symlink or copy with a single click.
 - **Project Workspaces** — View and manage project-local skill folders for supported agents, compare them with your central library, and sync changes in either direction. Supports nested skill directories and per-agent assignment when exporting.
 - **Linked Workspaces** — Point to any directory as a skills root — useful for skills that live outside the default agent paths. Managed as a standalone workspace without participating in global scenario sync.
-- **Scenarios** — Group skills into scenarios, configure per-scenario agent toggles, drag to reorder enabled skills, and switch between setups instantly.
-- **Batch operations** — Multi-select skills for bulk enable/disable, export, or delete.
-- **Skill tagging and filters** — Tag skills, filter by source or tag, and narrow large libraries quickly.
+- **Scenarios** — Group skills into scenarios, configure per-scenario agent toggles, drag to reorder enabled skills, and switch between setups instantly from the left sidebar.
+- **Batch operations** — Multi-select skills for bulk enable/disable, export, or delete. Project Workspaces also support bulk enable/disable for project-local skills.
+- **Skill tagging and filters** — Tag skills, use tags to group similar skills, and filter by source or tag to narrow large libraries quickly.
 - **Update tracking** — Check for upstream updates on Git-based skills; re-import local ones.
 - **Skill preview and source inspection** — Read `SKILL.md` / `README.md`, inspect source metadata, and compare local content with the upstream version inside the app.
 - **Custom tools** — Add your own agents/tools with custom skills directories, or override the default path for any built-in tool.
 - **Git backup and restore** — Version-control your skill library with Git for backup and multi-machine sync, then restore snapshot versions from Version History when needed.
 - **Flexible app settings** — Configure repo path, sync mode, default scenario, theme, text size, language, tray behavior, proxy, Git remote, and update checks in one place.
+
+### 🌟 Enhanced Features
+
+This fork is based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) and includes the following enhancements:
+
+#### 1. ClawHub Integration
+- **ClawHub API Client** — Built-in Rust module for seamless ClawHub platform integration
+- **Browse & Search** — Dedicated ClawHub tab in the Install Skills page with search and pagination support
+- **API Key Configuration** — Configure your ClawHub API key in Settings for authenticated access
+- **Multi-language Support** — Full i18n support for ClawHub features (EN, ZH, ZH-TW)
+
+#### 2. Enhanced Local Skills Management
+- **Dual-Tab Design** — "Skill Repository" and "Local Skills" tabs in My Skills page for better organization
+- **Local Skills Scanner** — Moved from Install Skills to My Skills for streamlined workflow
+- **Batch Operations** — Select and import multiple local skills at once
+- **Source Filtering** — Filter local skills by their source
+- **Skill Descriptions** — Auto-inferred descriptions during scanning
+- **Session Caching** — Faster performance with session storage caching
+- **Database Migration** — v5 schema with description field support
+- **Fresh App Icons** — Updated icons across all platforms for a modern look
+
+#### 3. Independent Sync Mode per Custom Agent
+- **Per-Agent Sync Settings** — Each custom agent can have its own sync mode (symlink/copy) independent of the global default
+- **Segmented Control UI** — Intuitive toggle interface in Settings matching the global sync mode design
+- **Auto Re-Sync** — Automatically re-sync skills when sync mode is changed
+- **Smart Path Conflict Detection** — Improved symlink handling to prevent false positives during file copy operations
+- **Priority System** — Custom mode > Global mode > Built-in default
 
 ## Quick Start
 
@@ -103,6 +132,14 @@ The **Help** button in **Settings** mirrors the current product flow: scenarios,
 | Backend | Rust |
 | Storage | SQLite (`rusqlite`) |
 | i18n | react-i18next |
+
+## Acknowledgments
+
+This project is a fork of the original [skills-manager](https://github.com/xingkongliang/skills-manager) by [@JayTL00](https://github.com/xingkongliang). We extend our gratitude to the original author for creating such an excellent tool for managing AI agent skills across multiple coding tools.
+
+**Original Project**: [https://github.com/xingkongliang/skills-manager](https://github.com/xingkongliang/skills-manager) (v1.14.1)
+
+We encourage you to check out the original project and show your support by starring it on GitHub.
 
 ## Getting Started
 

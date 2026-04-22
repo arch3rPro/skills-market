@@ -12,6 +12,8 @@
   <a href="./README.md">English</a>
 </p>
 
+> **注意**: 本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，添加了额外的功能和改进。
+
 <p align="center">
   <img src="assets/demo-zh.gif" width="800" alt="Skills Manager 演示" />
 </p>
@@ -33,6 +35,33 @@
 - **文档预览** — 直接在应用内查看 `SKILL.md` / `README.md`。
 - **自定义工具** — 添加自定义 Agent/工具并指定 Skills 目录，也可覆盖内置工具的默认路径。
 - **Git 备份** — 用 Git 管理技能库，支持版本控制和多机同步。
+
+### 🌟 增强功能
+
+本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，包含以下增强功能：
+
+#### 1. ClawHub 平台集成
+- **ClawHub API 客户端** — 内置 Rust 模块，无缝集成 ClawHub 平台
+- **浏览与搜索** — 在"安装 Skills"页面添加 ClawHub 专属标签页，支持搜索和分页浏览
+- **API Key 配置** — 在设置中配置 ClawHub API Key，支持认证访问
+- **多语言支持** — ClawHub 功能完整国际化（中文、英文、繁体中文）
+
+#### 2. 本地 Skills 管理优化
+- **双标签设计** — "我的 Skills"页面分为"技能仓库"和"本地 Skills"两个标签，组织更清晰
+- **本地扫描迁移** — 将本地技能扫描功能从"安装 Skills"移至"我的 Skills"，工作流更流畅
+- **批量操作** — 支持批量选择和导入多个本地技能
+- **来源筛选** — 按来源筛选本地技能
+- **技能描述** — 扫描时自动推断技能描述
+- **会话缓存** — 使用 session storage 缓存扫描结果，性能更快
+- **数据库迁移** — v5 版本架构，新增 description 字段支持
+- **全新图标** — 更新所有平台的应用图标，视觉效果更现代
+
+#### 3. 自定义 Agent 独立同步模式
+- **独立同步设置** — 每个自定义 Agent 可以独立设置同步模式（符号链接/文件复制），不受全局默认模式影响
+- **分段开关 UI** — 在设置页面使用直观的分段开关切换同步模式，设计风格与全局同步模式一致
+- **自动重新同步** — 修改同步模式后自动使用新模式重新同步技能
+- **智能路径冲突检测** — 改进的符号链接处理逻辑，避免文件复制时的误判
+- **优先级机制** — 自定义模式 > 全局模式 > 内置默认值
 
 ## 快速上手
 
@@ -86,6 +115,14 @@ Cursor · Claude Code · Codex · OpenCode · Amp · Kilo Code · Roo Code · Go
 | 后端 | Rust |
 | 存储 | SQLite（`rusqlite`） |
 | 国际化 | react-i18next |
+
+## 致谢
+
+本项目基于原 [skills-manager](https://github.com/xingkongliang/skills-manager) 项目（作者：[@JayTL00](https://github.com/xingkongliang)）进行二次开发。我们衷心感谢原作者创建了如此优秀的工具，让我们能够跨多个编码工具管理 AI Agent 技能。
+
+**原项目地址**: [https://github.com/xingkongliang/skills-manager](https://github.com/xingkongliang/skills-manager) (v1.14.1)
+
+我们鼓励你查看原项目并在 GitHub 上为它点亮 Star 以示支持。
 
 ## 快速开始
 
