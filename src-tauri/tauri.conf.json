@@ -30,7 +30,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERBRUYwMTBDOEQ3MDdEODAKUldTQWZYQ05EQUh2Mm0wNDZtNm5VYWJpbjRaZVJQRUhrQ2tkOXc3MHBWZ2VaREo0OVd3WEU3d0oK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFFNjdGOUE3MjAwQ0E5QTkKUldTcHFRd2dwL2xucmpnc1FVUWhCS0RNZjUvdmVmeG5LNnA3NDliMDUvbGd2UGZWMjFqdEpEaG4K",
       "endpoints": [
         "https://github.com/arch3rPro/Skills-Manager-Plus/releases/latest/download/latest.json"
       ]
