@@ -12,6 +12,8 @@
   <a href="./README.md">English</a>
 </p>
 
+> **注意**: 本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，添加了额外的功能和改进。
+
 <p align="center">
   <img src="assets/demo-zh.gif" width="800" alt="Skills Manager 演示" />
 </p>
