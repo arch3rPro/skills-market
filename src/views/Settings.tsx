@@ -114,7 +114,6 @@ export function Settings() {
   const [showMoreAgents, setShowMoreAgents] = useState(false);
   // Custom agent sync mode
   const [syncModeKey, setSyncModeKey] = useState<string | null>(null);
-  const [savingSyncMode, setSavingSyncMode] = useState(false);
   const [customToolSyncModes, setCustomToolSyncModes] = useState<Map<string, string>>(new Map());
 
   const GITHUB_URL = "https://github.com/xingkongliang/skills-manager";
@@ -207,7 +206,6 @@ export function Settings() {
 
   const handleToggleCustomAgentSyncMode = async (key: string, newMode: string) => {
     setSyncModeKey(key);
-    setSavingSyncMode(true);
     try {
       await api.setCustomToolSyncMode(key, newMode);
       // Update local state immediately for responsive UI
@@ -217,7 +215,6 @@ export function Settings() {
       toast.error(t("common.error"));
     } finally {
       setSyncModeKey(null);
-      setSavingSyncMode(false);
     }
   };
 
