@@ -235,7 +235,7 @@
     }
   },
   "install": {
-    "title": "Install Skills",
+    "title": "Skills Store",
     "browseMarket": "Leaderboard",
     "clawhub": "ClawHub",
     "localInstall": "Local Install",
@@ -357,6 +357,61 @@
         "detected": "Detected",
         "pending": "Pending",
         "imported": "Imported"
+      }
+    },
+    "plugin": {
+      "tabLabel": "Plugins",
+      "discover": "Discover",
+      "installed": "Installed",
+      "markets": "Markets",
+      "availableCount": "{{count}} plugins available",
+      "searchPlaceholder": "Search plugins...",
+      "noMarkets": "No Markets",
+      "noMarketsHint": "Add a market source to discover available plugins",
+      "addFirstMarket": "Add First Market",
+      "noPlugins": "No matching plugins found",
+      "noPluginsHint": "Try a different keyword or check if your market sources are accessible",
+      "allInstalled": "All plugins installed",
+      "install": "Install",
+      "installing": "Installing...",
+      "installedBadge": "Installed",
+      "installSuccess": "Installed {{count}} skills from {{name}}",
+      "installFailed": "Failed to install {{name}}: {{message}}",
+      "detail": {
+        "title": "Plugin Details",
+        "name": "Name",
+        "version": "Version",
+        "description": "Description",
+        "source": "Source",
+        "skillCount": "Contains {{count}} skills",
+        "skills": "Included Skills"
+      },
+      "market": {
+        "addMarket": "Add Market",
+        "addMarketTitle": "Add Plugin Market Source",
+        "addMarketDesc": "Enter a GitHub repository URL or owner/repo format",
+        "urlPlaceholder": "owner/repo or https://github.com/owner/repo",
+        "urlExamples": "Examples: claude-plugins-official, https://github.com/user/plugins",
+        "adding": "Adding...",
+        "addSuccess": "Market {{name}} added successfully",
+        "addFailed": "Failed to add market: {{message}}",
+        "removeConfirm": "Remove market \"{{name}}\"? Installed skills will not be deleted.",
+        "removeSuccess": "Market removed",
+        "refresh": "Refresh",
+        "refreshing": "Refreshing...",
+        "refreshSuccess": "Market {{name}} updated",
+        "refreshFailed": "Refresh failed: {{message}}",
+        "pluginCount": "{{count}} plugins",
+        "updatedAt": "Updated {{time}}",
+        "emptyList": "No market sources",
+        "emptyListHint": "Add a GitHub repository as a plugin market source"
+      },
+      "installedTab": {
+        "title": "Skills Installed via Plugins",
+        "empty": "No skills installed via plugins yet",
+        "emptyHint": "Install a plugin from the Discover tab and skills will appear here",
+        "fromPlugin": "From {{plugin}}",
+        "fromMarket": "Source market: {{market}}"
       }
     }
   },

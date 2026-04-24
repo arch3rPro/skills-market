@@ -95,6 +95,39 @@ pub struct ScenarioSkillToolToggleRecord {
     pub updated_at: i64,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct PluginMarketRecord {
+    pub id: String,
+    pub name: String,
+    pub url: String,
+    pub description: Option<String>,
+    pub plugin_count: i32,
+    pub last_fetched_at: Option<i64>,
+    pub last_error: Option<String>,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PluginCacheRecord {
+    pub id: String,
+    pub market_id: String,
+    pub name: String,
+    pub version: Option<String>,
+    pub description: Option<String>,
+    pub skill_names: String,
+    pub fetched_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PluginInstallRecord {
+    pub id: String,
+    pub market_id: String,
+    pub plugin_name: String,
+    pub skill_id: String,
+    pub installed_at: i64,
+}
+
 impl SkillStore {
     pub fn new(db_path: &PathBuf) -> Result<Self> {
         let conn = Connection::open(db_path)?;
@@ -173,6 +206,25 @@ impl SkillStore {
         )?;
         let mut rows = stmt.query_map(params![id], map_skill_row)?;
         Ok(rows.next().and_then(|r| r.ok()))
+    }
+
+    pub fn get_skills_by_ids(&self, ids: &[String]) -> Result<Vec<SkillRecord>> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let conn = self.conn.lock().unwrap();
+        let placeholders: Vec<String> = ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+        let sql = format!(
+            "SELECT id, name, description, source_type, source_ref, source_ref_resolved, source_subpath,
+                    source_branch, source_revision, remote_revision, central_path, content_hash, enabled,
+                    created_at, updated_at, status, update_status, last_checked_at, last_check_error
+             FROM skills WHERE id IN ({}) ORDER BY name",
+            placeholders.join(", ")
+        );
+        let mut stmt = conn.prepare(&sql)?;
+        let params: Vec<&dyn rusqlite::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+        let rows = stmt.query_map(params.as_slice(), map_skill_row)?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
     }
 
     pub fn get_skill_by_central_path(&self, central_path: &str) -> Result<Option<SkillRecord>> {
@@ -1021,6 +1073,203 @@ impl SkillStore {
         }
         Ok(map)
     }
+
+    // ── Plugin Markets ──
+
+    pub fn insert_plugin_market(&self, market: &PluginMarketRecord) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO plugin_markets (id, name, url, description, plugin_count, last_fetched_at, last_error, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![
+                market.id, market.name, market.url, market.description,
+                market.plugin_count, market.last_fetched_at, market.last_error,
+                market.created_at, market.updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_all_plugin_markets(&self) -> Result<Vec<PluginMarketRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, url, description, plugin_count, last_fetched_at, last_error, created_at, updated_at
+             FROM plugin_markets ORDER BY created_at",
+        )?;
+        let rows = stmt.query_map([], map_plugin_market_row)?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    pub fn get_plugin_market_by_id(&self, id: &str) -> Result<Option<PluginMarketRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, url, description, plugin_count, last_fetched_at, last_error, created_at, updated_at
+             FROM plugin_markets WHERE id = ?1",
+        )?;
+        let mut rows = stmt.query_map(params![id], map_plugin_market_row)?;
+        Ok(rows.next().and_then(|r| r.ok()))
+    }
+
+    pub fn get_plugin_market_by_url(&self, url: &str) -> Result<Option<PluginMarketRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, url, description, plugin_count, last_fetched_at, last_error, created_at, updated_at
+             FROM plugin_markets WHERE url = ?1",
+        )?;
+        let mut rows = stmt.query_map(params![url], map_plugin_market_row)?;
+        Ok(rows.next().and_then(|r| r.ok()))
+    }
+
+    pub fn update_plugin_market_fetch(
+        &self,
+        id: &str,
+        plugin_count: i32,
+        last_error: Option<&str>,
+    ) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        let now = chrono::Utc::now().timestamp_millis();
+        conn.execute(
+            "UPDATE plugin_markets SET plugin_count = ?1, last_fetched_at = ?2, last_error = ?3, updated_at = ?2
+             WHERE id = ?4",
+            params![plugin_count, now, last_error, id],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_plugin_market(&self, id: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM plugin_markets WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    // ── Plugin Cache ──
+
+    pub fn insert_plugin_cache(&self, rec: &PluginCacheRecord) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT OR REPLACE INTO plugin_cache (id, market_id, name, version, description, skill_names, fetched_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![
+                rec.id, rec.market_id, rec.name, rec.version,
+                rec.description, rec.skill_names, rec.fetched_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn clear_plugin_cache_for_market(&self, market_id: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "DELETE FROM plugin_cache WHERE market_id = ?1",
+            params![market_id],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_plugins_for_market(&self, market_id: &str) -> Result<Vec<PluginCacheRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, market_id, name, version, description, skill_names, fetched_at
+             FROM plugin_cache WHERE market_id = ?1 ORDER BY name",
+        )?;
+        let rows = stmt.query_map(params![market_id], map_plugin_cache_row)?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    pub fn get_all_plugins(&self) -> Result<Vec<PluginCacheRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, market_id, name, version, description, skill_names, fetched_at
+             FROM plugin_cache ORDER BY name",
+        )?;
+        let rows = stmt.query_map([], map_plugin_cache_row)?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    // ── Plugin Installs ──
+
+    pub fn insert_plugin_install(&self, rec: &PluginInstallRecord) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO plugin_installs (id, market_id, plugin_name, skill_id, installed_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                rec.id, rec.market_id, rec.plugin_name, rec.skill_id, rec.installed_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_plugin_installs(&self) -> Result<Vec<PluginInstallRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, market_id, plugin_name, skill_id, installed_at FROM plugin_installs ORDER BY installed_at",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok(PluginInstallRecord {
+                id: row.get(0)?,
+                market_id: row.get(1)?,
+                plugin_name: row.get(2)?,
+                skill_id: row.get(3)?,
+                installed_at: row.get(4)?,
+            })
+        })?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    #[allow(dead_code)]
+    pub fn get_plugin_installs_for_market(&self, market_id: &str) -> Result<Vec<PluginInstallRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, market_id, plugin_name, skill_id, installed_at
+             FROM plugin_installs WHERE market_id = ?1 ORDER BY installed_at",
+        )?;
+        let rows = stmt.query_map(params![market_id], |row| {
+            Ok(PluginInstallRecord {
+                id: row.get(0)?,
+                market_id: row.get(1)?,
+                plugin_name: row.get(2)?,
+                skill_id: row.get(3)?,
+                installed_at: row.get(4)?,
+            })
+        })?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
+
+    #[allow(dead_code)]
+    pub fn delete_plugin_installs_for_skill(&self, skill_id: &str) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "DELETE FROM plugin_installs WHERE skill_id = ?1",
+            params![skill_id],
+        )?;
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn get_plugin_installs_by_skill_ids(&self, skill_ids: &[String]) -> Result<Vec<PluginInstallRecord>> {
+        if skill_ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let conn = self.conn.lock().unwrap();
+        let placeholders: Vec<String> = skill_ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+        let sql = format!(
+            "SELECT id, market_id, plugin_name, skill_id, installed_at FROM plugin_installs WHERE skill_id IN ({}) ORDER BY installed_at",
+            placeholders.join(", ")
+        );
+        let mut stmt = conn.prepare(&sql)?;
+        let params: Vec<&dyn rusqlite::ToSql> = skill_ids.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+        let rows = stmt.query_map(params.as_slice(), |row| {
+            Ok(PluginInstallRecord {
+                id: row.get(0)?,
+                market_id: row.get(1)?,
+                plugin_name: row.get(2)?,
+                skill_id: row.get(3)?,
+                installed_at: row.get(4)?,
+            })
+        })?;
+        Ok(rows.filter_map(|r| r.ok()).collect())
+    }
 }
 
 fn map_skill_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<SkillRecord> {
@@ -1044,5 +1293,31 @@ fn map_skill_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<SkillRecord> {
         update_status: row.get(16)?,
         last_checked_at: row.get(17)?,
         last_check_error: row.get(18)?,
+    })
+}
+
+fn map_plugin_market_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PluginMarketRecord> {
+    Ok(PluginMarketRecord {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        url: row.get(2)?,
+        description: row.get(3)?,
+        plugin_count: row.get(4)?,
+        last_fetched_at: row.get(5)?,
+        last_error: row.get(6)?,
+        created_at: row.get(7)?,
+        updated_at: row.get(8)?,
+    })
+}
+
+fn map_plugin_cache_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PluginCacheRecord> {
+    Ok(PluginCacheRecord {
+        id: row.get(0)?,
+        market_id: row.get(1)?,
+        name: row.get(2)?,
+        version: row.get(3)?,
+        description: row.get(4)?,
+        skill_names: row.get(5)?,
+        fetched_at: row.get(6)?,
     })
 }

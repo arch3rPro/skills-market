@@ -147,6 +147,15 @@ impl From<tauri::Error> for AppError {
     }
 }
 
+impl From<anyhow::Error> for AppError {
+    fn from(e: anyhow::Error) -> Self {
+        Self {
+            kind: ErrorKind::Internal,
+            message: e.to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

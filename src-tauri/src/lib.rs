@@ -490,6 +490,15 @@ pub fn run() {
             commands::projects::reorder_projects,
             commands::scenarios::get_scenario_skill_order,
             commands::scenarios::reorder_scenario_skills,
+            // Marketplace
+            commands::marketplace::add_plugin_market,
+            commands::marketplace::list_plugin_markets,
+            commands::marketplace::remove_plugin_market,
+            commands::marketplace::refresh_plugin_market,
+            commands::marketplace::list_all_plugins,
+            commands::marketplace::search_plugins,
+            commands::marketplace::install_plugin_skills,
+            commands::marketplace::list_plugin_installed_skills,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

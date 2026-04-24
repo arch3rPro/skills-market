@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 use rusqlite::Connection;
 
 /// Current schema version. Bump this when adding a new migration.
-const LATEST_VERSION: u32 = 5;
+const LATEST_VERSION: u32 = 6;
 
 /// Run all pending migrations on the database.
 ///
@@ -52,6 +52,7 @@ fn migrate_step(conn: &Connection, from_version: u32) -> Result<()> {
         2 => migrate_v2_to_v3(conn),
         3 => migrate_v3_to_v4(conn),
         4 => migrate_v4_to_v5(conn),
+        5 => migrate_v5_to_v6(conn),
         _ => bail!("unknown migration version: {from_version}"),
     }
 }
@@ -244,6 +245,45 @@ fn migrate_v3_to_v4(conn: &Connection) -> Result<()> {
 /// v4 → v5: Add description column to discovered_skills.
 fn migrate_v4_to_v5(conn: &Connection) -> Result<()> {
     add_column_if_missing(conn, "discovered_skills", "description", "TEXT")?;
+    Ok(())
+}
+
+/// v5 → v6: Add plugin marketplace tables.
+fn migrate_v5_to_v6(conn: &Connection) -> Result<()> {
+    conn.execute_batch(
+        "
+        CREATE TABLE IF NOT EXISTS plugin_markets (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            url TEXT NOT NULL UNIQUE,
+            description TEXT,
+            plugin_count INTEGER DEFAULT 0,
+            last_fetched_at INTEGER,
+            last_error TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS plugin_cache (
+            id TEXT PRIMARY KEY,
+            market_id TEXT NOT NULL REFERENCES plugin_markets(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            version TEXT,
+            description TEXT,
+            skill_names TEXT NOT NULL,
+            fetched_at INTEGER NOT NULL,
+            UNIQUE(market_id, name)
+        );
+
+        CREATE TABLE IF NOT EXISTS plugin_installs (
+            id TEXT PRIMARY KEY,
+            market_id TEXT NOT NULL REFERENCES plugin_markets(id) ON DELETE CASCADE,
+            plugin_name TEXT NOT NULL,
+            skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+            installed_at INTEGER NOT NULL
+        );
+        ",
+    )?;
     Ok(())
 }
 

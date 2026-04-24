@@ -18,6 +18,7 @@ import {
   Search,
   X,
   MoreHorizontal,
+  Package,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { listen } from "@tauri-apps/api/event";
 import { StatusBanner } from "../components/StatusBanner";
+import { PluginMarketplace } from "./PluginMarketplace";
 import { getErrorMessage, getErrorKind } from "../lib/error";
 
 const MARKET_PAGE_SIZE = 24;
@@ -44,7 +46,7 @@ export function InstallSkills() {
   const { refreshScenarios, refreshManagedSkills, managedSkills, openSkillDetailById } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"market" | "clawhub" | "local" | "git">("market");
+  const [activeTab, setActiveTab] = useState<"market" | "clawhub" | "local" | "git" | "plugin">("market");
   const [marketTab, setMarketTab] = useState<"hot" | "trending" | "alltime">("alltime");
   const [marketQuery, setMarketQuery] = useState("");
   const [marketSourceFilter, setMarketSourceFilter] = useState("all");
@@ -270,12 +272,12 @@ export function InstallSkills() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "market" || tab === "clawhub" || tab === "local" || tab === "git") {
+    if (tab === "market" || tab === "clawhub" || tab === "local" || tab === "git" || tab === "plugin") {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
-  const switchTab = (tab: "market" | "clawhub" | "local" | "git") => {
+  const switchTab = (tab: "market" | "clawhub" | "local" | "git" | "plugin") => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -797,6 +799,7 @@ export function InstallSkills() {
         <div className="flex gap-1 border-b border-border-subtle">
           {[
             { id: "market" as const, label: t("install.browseMarket"), icon: Box },
+            { id: "plugin" as const, label: t("install.plugin.tabLabel"), icon: Package },
             { id: "clawhub" as const, label: t("install.clawhub", { defaultValue: "ClawHub" }), icon: Star },
             { id: "local" as const, label: t("install.localInstall"), icon: UploadCloud },
             { id: "git" as const, label: t("install.gitInstall"), icon: Github },
@@ -1685,6 +1688,8 @@ export function InstallSkills() {
           </div>
         </div>
       )}
+
+      {activeTab === "plugin" && <PluginMarketplace />}
 
       {/* Git preview / selection dialog */}
       {gitPreview && (

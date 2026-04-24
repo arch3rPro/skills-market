@@ -180,6 +180,55 @@ export interface ProjectSkillDocument {
   content: string;
 }
 
+export interface PluginMarketRecord {
+  id: string;
+  name: string;
+  url: string;
+  description: string | null;
+  plugin_count: number;
+  last_fetched_at: number | null;
+  last_error: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface PluginCacheRecord {
+  id: string;
+  market_id: string;
+  name: string;
+  version: string | null;
+  description: string | null;
+  skill_names: string[];
+  fetched_at: number;
+}
+
+export interface PluginWithMarketDto {
+  id: string;
+  market_id: string;
+  name: string;
+  version: string | null;
+  description: string | null;
+  skill_names: string[];
+  fetched_at: number;
+  market_name: string;
+}
+
+export interface BatchPluginInstallResult {
+  installed: number;
+  skipped: number;
+  failed: string[];
+}
+
+export interface PluginInstalledSkillDto {
+  skill_id: string;
+  skill_name: string;
+  skill_description: string | null;
+  market_id: string;
+  market_name: string;
+  plugin_name: string;
+  installed_at: number;
+}
+
 // ── Tools ──
 
 export const getToolStatus = () => invoke<ToolInfo[]>("get_tool_status");
@@ -587,3 +636,29 @@ export const deleteProjectSkill = (projectId: string, skillRelativePath: string,
 
 export const slugifySkillNames = (names: string[]) =>
   invoke<string[]>("slugify_skill_names", { names });
+
+// ── Marketplace ──
+
+export const addPluginMarket = (url: string) =>
+  invoke<PluginMarketRecord>("add_plugin_market", { url });
+
+export const listPluginMarkets = () =>
+  invoke<PluginMarketRecord[]>("list_plugin_markets");
+
+export const removePluginMarket = (id: string) =>
+  invoke<void>("remove_plugin_market", { id });
+
+export const refreshPluginMarket = (id: string) =>
+  invoke<PluginCacheRecord[]>("refresh_plugin_market", { id });
+
+export const listAllPlugins = () =>
+  invoke<PluginWithMarketDto[]>("list_all_plugins");
+
+export const searchPlugins = (query: string) =>
+  invoke<PluginWithMarketDto[]>("search_plugins", { query });
+
+export const installPluginSkills = (marketId: string, pluginName: string) =>
+  invoke<BatchPluginInstallResult>("install_plugin_skills", { marketId, pluginName });
+
+export const listPluginInstalledSkills = () =>
+  invoke<PluginInstalledSkillDto[]>("list_plugin_installed_skills");

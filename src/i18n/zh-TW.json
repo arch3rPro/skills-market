@@ -207,7 +207,7 @@
     "batchDisabled": "已停用 {{count}} 個 Skill"
   },
   "install": {
-    "title": "安裝 Skills",
+    "title": "技能商店",
     "browseMarket": "瀏覽排行榜",
     "clawhub": "ClawHub",
     "localInstall": "本機安裝",
@@ -324,6 +324,61 @@
         "detected": "已發現",
         "pending": "待匯入",
         "imported": "已匯入"
+      }
+    },
+    "plugin": {
+      "tabLabel": "插件市場",
+      "discover": "發現",
+      "installed": "已安裝",
+      "markets": "市場",
+      "availableCount": "{{count}} 個可用插件",
+      "searchPlaceholder": "搜尋插件...",
+      "noMarkets": "暫無市場",
+      "noMarketsHint": "新增一個市場來源以發現可用插件",
+      "addFirstMarket": "新增第一個市場",
+      "noPlugins": "沒有找到符合的插件",
+      "noPluginsHint": "嘗試換一個關鍵詞，或檢查市場來源是否可用",
+      "allInstalled": "所有插件已安裝",
+      "install": "安裝",
+      "installing": "安裝中...",
+      "installedBadge": "已安裝",
+      "installSuccess": "已安裝 {{name}} 中的 {{count}} 個技能",
+      "installFailed": "安裝 {{name}} 失敗：{{message}}",
+      "detail": {
+        "title": "插件詳情",
+        "name": "名稱",
+        "version": "版本",
+        "description": "描述",
+        "source": "來源",
+        "skillCount": "包含 {{count}} 個技能",
+        "skills": "包含的技能"
+      },
+      "market": {
+        "addMarket": "新增市場",
+        "addMarketTitle": "新增插件市場來源",
+        "addMarketDesc": "輸入 GitHub 倉庫位址或 owner/repo 格式",
+        "urlPlaceholder": "owner/repo 或 https://github.com/owner/repo",
+        "urlExamples": "範例：claude-plugins-official、https://github.com/user/plugins",
+        "adding": "正在新增...",
+        "addSuccess": "市場 {{name}} 新增成功",
+        "addFailed": "新增市場失敗：{{message}}",
+        "removeConfirm": "確定移除市場「{{name}}」？已安裝的技能不會被刪除。",
+        "removeSuccess": "市場已移除",
+        "refresh": "重新整理",
+        "refreshing": "正在重新整理...",
+        "refreshSuccess": "市場 {{name}} 已更新",
+        "refreshFailed": "重新整理失敗：{{message}}",
+        "pluginCount": "{{count}} 個插件",
+        "updatedAt": "更新於 {{time}}",
+        "emptyList": "暫無市場來源",
+        "emptyListHint": "新增一個 GitHub 倉庫作為插件市場來源"
+      },
+      "installedTab": {
+        "title": "透過插件安裝的技能",
+        "empty": "暫無透過插件安裝的技能",
+        "emptyHint": "在發現頁安裝插件後，技能將顯示在這裡",
+        "fromPlugin": "來自 {{plugin}}",
+        "fromMarket": "來源市場：{{market}}"
       }
     }
   },
