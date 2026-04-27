@@ -32,7 +32,6 @@ dist-ssr
 *.sw?
 .trae/*
 .claude
-docs
 reference
 CLAUDE.md
 

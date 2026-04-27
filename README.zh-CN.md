@@ -5,133 +5,115 @@
 <h1 align="center">Skills-Manager-Plus</h1>
 
 <p align="center">
-  一个应用，统一管理所有 AI 编码工具的 Skills。
+  一款桌面应用，用统一入口管理 AI Agent Skills 的安装、整理、同步、项目协作与 Git 备份。
 </p>
 
 <p align="center">
   <a href="./README.md">English</a>
 </p>
 
-> **注意**: 本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 二次开发，当前仓库为 [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus)，并添加了额外功能与改进。
-
 <p align="center">
-  <img src="assets/demo-zh.gif" width="800" alt="Skills-Manager-Plus 演示" />
+  <img src="assets/skills-management-zh.png" width="800" alt="Skills-Manager-Plus 技能管理" />
 </p>
 
-| 我的 Skills | 项目 Skills |
-|:-----------:|:----------:|
-| <img src="assets/CleanShot_20260312_234539@2x.png" width="400" alt="我的 Skills" /> | <img src="assets/CleanShot_20260312_234613@2x.png" width="400" alt="项目 Skills" /> |
+## 项目简介
 
-## 1.20.2 新增内容
+Skills-Manager-Plus 是一个面向多工具、多场景、多项目工作流的 AI Skills 管理器。它提供一个统一的中央库，用来安装、整理、启用、同步和备份 Skills，并支持将项目本地 Skills 与中央库进行对比和双向流转。
 
-- **插件市场** — 支持从 GitHub 仓库添加插件市场、发现插件，并在应用内直接安装插件打包的 Skills。
-- **可并存安装的分支标识** — `Skills-Manager-Plus` 现在使用独立的 Bundle ID、更新通道、配置目录、中央仓库路径和数据库文件，可与原版 Skills Manager 同时安装。
-- **品牌与发布信息统一** — 桌面外壳、更新元数据、仓库链接和侧边栏品牌展示已统一到当前产品名。
+相比手动维护分散在不同工具目录中的 `skills/` 文件夹，这个项目把技能管理收拢成一套可持续维护的工作流。
 
-## 功能
+## 它解决什么问题
 
-- **统一技能库** — 从 Git 仓库、本地目录、`.zip` / `.skill` 文件或 [skills.sh](https://skills.sh) 市场安装技能，统一存放在 `~/.skills-manager-plus`。
-- **多工具同步** — 一键将技能同步到任意支持的工具，支持软链接和复制两种模式。
-- **项目 Skills** — 查看并管理任意项目的 `.claude/skills/` 目录，支持与中央库双向同步。支持嵌套 Skill 目录和导出时按 Agent 分配。
-- **关联工作区** — 将任意目录指定为 Skills 根目录，适合管理不在默认 Agent 路径下的 Skills。作为独立工作区管理，不参与全局场景同步。
-- **场景管理** — 将技能分组为场景（Scenario），支持按场景配置 Agent 开关，随时切换。
-- **批量操作** — 多选技能后批量启用/禁用、导出或删除。
-- **技能标签** — 为技能添加标签并按标签筛选，快速定位。
-- **更新检查** — 为 Git 类技能检查远端更新；本地技能支持重新导入。
-- **文档预览** — 直接在应用内查看 `SKILL.md` / `README.md`。
-- **自定义工具** — 添加自定义 Agent/工具并指定 Skills 目录，也可覆盖内置工具的默认路径。
-- **Git 备份** — 用 Git 管理技能库，支持版本控制和多机同步。
-- **插件生态支持** — 可注册插件市场、浏览插件打包内容，并通过单个插件入口安装一组相关 Skills。
+- Skills 分散在不同工具和不同机器中，难以统一管理。
+- 不同工作流需要不同的启用技能组合。
+- 项目内本地 Skills 与中央库容易逐渐偏离。
+- 备份、迁移、恢复 Skills 库通常依赖手工维护，成本高且不稳定。
 
-### 🌟 增强功能
+Skills-Manager-Plus 通过中央库、场景切换、项目工作区、按 Agent 同步和 Git 备份来解决这些问题。
 
-本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，当前维护仓库为 [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus)，包含以下增强功能：
+## 核心能力
 
-#### 1. ClawHub 平台集成
-- **ClawHub API 客户端** — 内置 Rust 模块，无缝集成 ClawHub 平台
-- **浏览与搜索** — 在"安装 Skills"页面添加 ClawHub 专属标签页，支持搜索和分页浏览
-- **API Key 配置** — 在设置中配置 ClawHub API Key，支持认证访问
-- **多语言支持** — ClawHub 功能完整国际化（中文、英文、繁体中文）
+- **中央技能库** — 从 Git 仓库、本地目录、`.zip` 或 `.skill` 压缩包、skills.sh、ClawHub 和插件包中导入 Skills。
+- **技能管理** — 在一个界面里查看、打标签、启用、停用、预览、比较和同步 Skills。
+- **技能商店** — 从市场、Git、本地扫描、ClawHub 和插件市场安装 Skills。
+- **场景管理** — 为不同工作流、客户或项目维护不同的技能组合。
+- **项目工作区** — 将项目本地 Skills 与中央库进行对比，并支持双向导入导出。
+- **按 Agent 同步** — 支持软链接或复制模式，并允许自定义 Agent 使用独立同步策略。
+- **Git 备份** — 提供快照式版本历史，用于备份、恢复和多机同步。
 
-#### 2. 本地 Skills 管理优化
-- **双标签设计** — "我的 Skills"页面分为"技能仓库"和"本地 Skills"两个标签，组织更清晰
-- **本地扫描迁移** — 将本地技能扫描功能从"安装 Skills"移至"我的 Skills"，工作流更流畅
-- **批量操作** — 支持批量选择和导入多个本地技能
-- **来源筛选** — 按来源筛选本地技能
-- **技能描述** — 扫描时自动推断技能描述
-- **会话缓存** — 使用 session storage 缓存扫描结果，性能更快
-- **数据库迁移** — v5 版本架构，新增 description 字段支持
-- **全新图标** — 更新所有平台的应用图标，视觉效果更现代
+## 这个 Fork 增加了什么
 
-#### 3. 自定义 Agent 独立同步模式
-- **独立同步设置** — 每个自定义 Agent 可以独立设置同步模式（符号链接/文件复制），不受全局默认模式影响
-- **分段开关 UI** — 在设置页面使用直观的分段开关切换同步模式，设计风格与全局同步模式一致
-- **自动重新同步** — 修改同步模式后自动使用新模式重新同步技能
-- **智能路径冲突检测** — 改进的符号链接处理逻辑，避免文件复制时的误判
-- **优先级机制** — 自定义模式 > 全局模式 > 内置默认值
+这个 Fork 在原版 `skills-manager` 的基础上，重点补强了技能发现、本地管理、自定义 Agent 和插件分发相关能力。
 
-## 快速上手
+### ClawHub 集成
 
-1. 先创建或切换到一个适合当前工作的场景。
-2. 从本地目录、Git 仓库、压缩包或市场安装 Skills。
-3. 打开 **我的 Skills**，决定哪些 Skill 属于当前场景。
-4. 将已启用的 Skill 同步到已检测到的工具；如果是项目内本地 Skills，则使用 **项目工作区** 管理。
-5. 在 **设置** 中配置 Agent 路径、自定义工具、代理和 Git 偏好。
-6. 如果需要历史版本或多机同步，先在 **设置** 保存 Git 远程地址，再到 **我的 Skills** 执行 **开始备份** 或 **同步到 Git**。
+- 内置 ClawHub 搜索和浏览流程。
+- 在 `设置` 中直接配置 API Key。
+- 成为安装工作流的一部分，而不是额外的外部步骤。
 
-## Git 备份
+### 更完善的本地 Skills 工作流
 
-将 `~/.skills-manager-plus/skills/` 备份到 Git 仓库，用于版本管理和多机同步。
+- `技能管理` 页面拆分为 `技能仓库` 和 `本地技能`。
+- 本地扫描和导入进入主工作流。
+- 支持批量导入、来源筛选和描述推断，更适合大型本地技能库。
 
-### 快速配置
+### 自定义 Agent 同步控制
 
-1. 创建一个私有仓库（推荐）。
-2. 打开 **设置 → Git 同步配置**，保存远程仓库地址。
-3. 打开 **我的 Skills** 页面。
-4. 二选一：
-- 已有远程仓库：点击 **开始备份**，按已配置地址克隆。
-- 首次本地初始化：点击 **开始备份** 初始化本地仓库，再使用 **同步到 Git**。
-5. 在我的 Skills 顶部工具栏点击 **同步到 Git**。
+- 每个自定义 Agent 可以独立设置同步模式。
+- 自定义同步策略不必跟随全局默认值。
+- 同步过程中的路径和符号链接处理更稳健。
 
-`同步到 Git` 会根据仓库状态自动处理拉取/提交/推送。
-每次同步成功会自动创建一个快照版本标签。你可以在我的 Skills 中打开 **版本历史**，并将任意快照恢复为一条新的提交。
+### 插件市场支持
 
-### 认证说明
+- 可从 GitHub 仓库添加插件市场源。
+- 可发现插件包并直接在应用内安装其打包技能。
+- 可单独追踪通过插件安装的 Skills。
 
-- SSH 地址（`git@github.com:...`）：需要先在本机配置 SSH Key，并将公钥添加到 GitHub。
-- HTTPS 地址（`https://github.com/...`）：推送通常需要 Personal Access Token（PAT）。
+### 独立产品标识
 
-> **注意：** SQLite 数据库（`~/.skills-manager-plus/skills-manager-plus.db`）不纳入 Git 管理，它存储的元数据可通过扫描技能文件重建。
+- 使用独立的 Bundle ID、更新通道、配置目录、仓库路径和数据库文件。
+- 可以与原版 Skills Manager 在同一台机器上共存。
+
+## 产品结构
+
+当前应用按这些模块组织：
+
+- `数据看板`
+- `技能管理`
+- `技能商店`
+- `场景`
+- `项目工作区`
+- `设置`
+
+完整使用文档位于 [docs/usage/zh-CN/README.md](./docs/usage/zh-CN/README.md)。
+
+## 文档导航
+
+- [使用总览](./docs/usage/zh-CN/overview.md)
+- [数据看板](./docs/usage/zh-CN/dashboard.md)
+- [技能商店](./docs/usage/zh-CN/skills-store.md)
+- [技能管理](./docs/usage/zh-CN/skills-management.md)
+- [场景](./docs/usage/zh-CN/scenarios.md)
+- [项目工作区](./docs/usage/zh-CN/project-workspaces.md)
+- [设置](./docs/usage/zh-CN/settings.md)
+- [Git 备份](./docs/usage/zh-CN/git-backup.md)
 
 ## 支持的工具
 
 Cursor · Claude Code · Codex · OpenCode · Amp · Kilo Code · Roo Code · Goose · Gemini CLI · GitHub Copilot · Windsurf · TRAE IDE · Antigravity · Clawdbot · Droid
 
-你也可以在**设置**中添加自定义工具，以相同方式管理其 Skills。
+你也可以在 `设置` 中添加自定义工具。
 
-## 应用内帮助
+## 快速上手
 
-设置页中的 **帮助** 按钮会展示与上面一致的快速流程，方便用户不离开应用也能快速理解使用方式。
+1. 创建或切换到一个场景。
+2. 打开 `技能商店`，从市场、Git、本地、ClawHub 或插件市场导入 Skills。
+3. 打开 `技能管理`，决定当前场景需要启用哪些 Skills。
+4. 将启用的 Skills 同步到已安装工具。
+5. 如果需要处理项目本地 Skills，使用 `项目工作区`。
+6. 如果需要历史记录、恢复点或多机同步，配置 `Git 备份`。
 
-## 技术栈
-
-| 层 | 技术 |
-|----|------|
-| 前端 | React 19、TypeScript、Vite、Tailwind CSS |
-| 桌面 | Tauri 2 |
-| 后端 | Rust |
-| 存储 | SQLite（`rusqlite`） |
-| 国际化 | react-i18next |
-
-## 致谢
-
-本项目基于原 [skills-manager](https://github.com/xingkongliang/skills-manager) 项目（作者：[@JayTL00](https://github.com/xingkongliang)）进行二次开发，当前维护仓库为 [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus)。我们衷心感谢原作者创建了如此优秀的工具，让我们能够跨多个编码工具管理 AI Agent 技能。
-
-**原项目地址**: [https://github.com/xingkongliang/skills-manager](https://github.com/xingkongliang/skills-manager) (v1.14.1)
-
-我们鼓励你查看原项目并在 GitHub 上为它点亮 Star 以示支持。
-
-## 快速开始
+## 开发
 
 ### 前置依赖
 
@@ -139,7 +121,7 @@ Cursor · Claude Code · Codex · OpenCode · Amp · Kilo Code · Roo Code · Go
 - Rust 工具链
 - 当前系统的 [Tauri 依赖](https://v2.tauri.app/start/prerequisites/)
 
-### 开发
+### 本地运行
 
 ```bash
 npm install
@@ -154,15 +136,21 @@ npm run tauri:build
 
 ## 常见问题
 
-### macOS 提示"应用已损坏，无法打开"
+### macOS 提示 "App is damaged and can't be opened"
 
-下载应用后如果出现此提示，在终端执行以下命令后重新打开即可：
+如果 macOS 阻止打开下载后的应用，执行：
 
 ```bash
 xattr -cr /Applications/Skills-Manager-Plus.app
 ```
 
 如果 `.app` 不在 `/Applications`，请替换为实际路径。
+
+## 致谢
+
+Skills-Manager-Plus 基于 [skills-manager](https://github.com/xingkongliang/skills-manager) `v1.14.1` 二次开发。
+
+感谢原项目为跨工具 AI Skills 管理打下的基础。
 
 ## License
 

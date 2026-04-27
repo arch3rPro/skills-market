@@ -5,150 +5,115 @@
 <h1 align="center">Skills-Manager-Plus</h1>
 
 <p align="center">
-  One app to manage AI agent skills across all your coding tools.
+  A desktop app for building, organizing, syncing, and backing up AI agent skills across tools, scenarios, and project workspaces.
 </p>
 
 <p align="center">
   <a href="./README.zh-CN.md">中文说明</a>
-  &nbsp;·&nbsp;
-  <a href="https://x.com/JayTL00">@JayTL00 on X</a>
-  &nbsp;·&nbsp;
-  <a href="https://buymeacoffee.com/jaytl">Buy me a coffee</a>
 </p>
-
-> **Note**: This project is a fork based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager), published at [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus) with additional features and improvements.
 
 <p align="center">
-  <img src="assets/demo.gif" width="800" alt="Skills-Manager-Plus Demo" />
+  <img src="assets/skills-management.png" width="800" alt="Skills-Manager-Plus Skills Management" />
 </p>
 
-<p align="center"><strong>My Skills</strong></p>
-<p align="center"><img src="assets/CleanShot_20260419_003504@2x.png" width="800" alt="My Skills" /></p>
+## Overview
 
-<p align="center"><strong>Install Skills — Marketplace</strong></p>
-<p align="center"><img src="assets/CleanShot_20260316_231142@2x.png" width="800" alt="Install Skills Marketplace" /></p>
+Skills-Manager-Plus is a cross-tool skill manager for people who work with multiple AI coding agents. It gives you one central place to install skills, organize them by scenario, sync them to supported tools, compare them with project-local skill folders, and keep everything versioned with Git.
 
-<p align="center"><strong>Projects</strong></p>
-<p align="center"><img src="assets/CleanShot_20260419_003526@2x.png" width="800" alt="Projects" /></p>
+Instead of managing scattered `skills/` directories by hand, you maintain a central library and decide how each workflow should use it.
 
-<p align="center"><strong>Settings</strong></p>
-<p align="center"><img src="assets/CleanShot_20260419_003825@2x.png" width="800" alt="Settings" /></p>
+## What Problem It Solves
 
-<p align="center"><strong>Code Diff</strong></p>
-<p align="center"><img src="assets/CleanShot_20260419_003613@2x.png" width="800" alt="Code Diff" /></p>
+- Skills are usually scattered across different tools and machines.
+- Different workflows need different active skill sets.
+- Project-local skills drift away from central libraries over time.
+- Backing up or migrating a skills library is easy to forget and hard to recover cleanly.
 
-## New in 1.20.2
+Skills-Manager-Plus addresses this with a central library, scenario-based switching, project workspace comparison, per-agent sync, and built-in Git backup.
 
-- **Plugin Marketplace** — Add plugin markets from GitHub repositories, discover plugins, and install bundled skills without leaving the app.
-- **Parallel install-safe fork identity** — `Skills-Manager-Plus` now uses its own bundle ID, updater channel, config directory, central repo path, and database file so it can coexist with the original Skills Manager.
-- **Refined app branding** — The desktop shell, updater metadata, repository links, and sidebar branding are aligned with the current product name.
+## Key Capabilities
 
-## Features
+- **Central skill library** — Import skills from Git repositories, local folders, `.zip` or `.skill` archives, skills.sh, ClawHub, and plugin bundles.
+- **Skills Management** — Review, tag, enable, disable, inspect, compare, and sync skills from one management surface.
+- **Skills Store** — Install from marketplace sources, Git repositories, local scans, ClawHub, and plugin markets.
+- **Scenarios** — Keep separate skill sets for different workflows, clients, or projects, then switch between them quickly.
+- **Project Workspaces** — Compare project-local skills against the central library and move changes in either direction.
+- **Per-agent sync** — Sync with symlink or copy mode, including independent sync mode for custom agents.
+- **Git backup** — Create snapshot-based history for backup, recovery, and multi-machine sync.
 
-- **Unified skill library** — Install skills from Git repos, local folders, `.zip` / `.skill` archives, or the [skills.sh](https://skills.sh) marketplace. Everything goes into one central repo, which defaults to `~/.skills-manager-plus` and can be customized in **Settings**.
-- **Marketplace + AI search** — Browse popular skills from the marketplace, run keyword search, or enable SkillsMP AI search with your API key.
-- **Multi-tool sync** — Sync skills to any supported tool via symlink or copy with a single click.
-- **Project Workspaces** — View and manage project-local skill folders for supported agents, compare them with your central library, and sync changes in either direction. Supports nested skill directories and per-agent assignment when exporting.
-- **Linked Workspaces** — Point to any directory as a skills root — useful for skills that live outside the default agent paths. Managed as a standalone workspace without participating in global scenario sync.
-- **Scenarios** — Group skills into scenarios, configure per-scenario agent toggles, drag to reorder enabled skills, and switch between setups instantly from the left sidebar.
-- **Batch operations** — Multi-select skills for bulk enable/disable, export, or delete. Project Workspaces also support bulk enable/disable for project-local skills.
-- **Skill tagging and filters** — Tag skills, use tags to group similar skills, and filter by source or tag to narrow large libraries quickly.
-- **Update tracking** — Check for upstream updates on Git-based skills; re-import local ones.
-- **Skill preview and source inspection** — Read `SKILL.md` / `README.md`, inspect source metadata, and compare local content with the upstream version inside the app.
-- **Custom tools** — Add your own agents/tools with custom skills directories, or override the default path for any built-in tool.
-- **Git backup and restore** — Version-control your skill library with Git for backup and multi-machine sync, then restore snapshot versions from Version History when needed.
-- **Flexible app settings** — Configure repo path, sync mode, default scenario, theme, text size, language, tray behavior, proxy, Git remote, and update checks in one place.
-- **Plugin ecosystem support** — Register plugin markets, browse bundled plugin packs, and install multiple related skills through one plugin entry.
+## What This Fork Adds
 
-### 🌟 Enhanced Features
+This fork extends the original `skills-manager` with deeper workflow coverage around discovery, local management, custom agents, and plugin distribution.
 
-This fork is based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) and is maintained at [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus). It includes the following enhancements:
+### ClawHub Integration
 
-#### 1. ClawHub Integration
-- **ClawHub API Client** — Built-in Rust module for seamless ClawHub platform integration
-- **Browse & Search** — Dedicated ClawHub tab in the Install Skills page with search and pagination support
-- **API Key Configuration** — Configure your ClawHub API key in Settings for authenticated access
-- **Multi-language Support** — Full i18n support for ClawHub features (EN, ZH, ZH-TW)
+- Built-in ClawHub search and browsing flow.
+- API key configuration in `Settings`.
+- Integrated into the installation workflow instead of being a separate external step.
 
-#### 2. Enhanced Local Skills Management
-- **Dual-Tab Design** — "Skill Repository" and "Local Skills" tabs in My Skills page for better organization
-- **Local Skills Scanner** — Moved from Install Skills to My Skills for streamlined workflow
-- **Batch Operations** — Select and import multiple local skills at once
-- **Source Filtering** — Filter local skills by their source
-- **Skill Descriptions** — Auto-inferred descriptions during scanning
-- **Session Caching** — Faster performance with session storage caching
-- **Database Migration** — v5 schema with description field support
-- **Fresh App Icons** — Updated icons across all platforms for a modern look
+### Better Local Skills Workflow
 
-#### 3. Independent Sync Mode per Custom Agent
-- **Per-Agent Sync Settings** — Each custom agent can have its own sync mode (symlink/copy) independent of the global default
-- **Segmented Control UI** — Intuitive toggle interface in Settings matching the global sync mode design
-- **Auto Re-Sync** — Automatically re-sync skills when sync mode is changed
-- **Smart Path Conflict Detection** — Improved symlink handling to prevent false positives during file copy operations
-- **Priority System** — Custom mode > Global mode > Built-in default
+- `Skills Management` separates `Skill Repository` and `Local Skills`.
+- Local scan and import are part of the main management workflow.
+- Batch import, source filtering, and description inference improve large local libraries.
 
-## Quick Start
+### Custom Agent Sync Control
 
-1. Create or switch to a scenario for the workflow you want to use.
-2. Install skills from local folders, Git repositories, archives, or the marketplace. If you have a SkillsMP API key, you can also turn on AI search.
-3. Open **My Skills** to decide which skills belong to the current scenario, tag them, review docs, and manage per-agent sync.
-4. Sync enabled skills to detected tools, or use **Project Workspaces** to compare project-local skills with your central library and move changes both ways.
-5. Configure agent paths, custom tools, sync mode, default scenario, theme, language, proxy, and Git preferences in **Settings**.
-6. If you want history or multi-machine sync, set a Git remote in **Settings** and run **Start Backup** or **Sync to Git** from **My Skills**.
+- Each custom agent can use its own sync mode.
+- Sync behavior can differ from the global default.
+- Path and symlink handling are more robust during sync operations.
 
-## Git Backup
+### Plugin Marketplace Support
 
-Back up the `skills/` folder inside your current central repository to a Git repo for version history and multi-machine sync. By default this is `~/.skills-manager-plus/skills/`.
+- Add plugin market sources from GitHub repositories.
+- Discover plugin bundles and install packaged skills directly in-app.
+- Track plugin-installed skills separately from the rest of the library.
 
-### Quick setup
+### Standalone Product Identity
 
-1. Create a private repository (recommended).
-2. Open **Settings → Git Sync Configuration** and save your remote URL.
-3. Open **My Skills**.
-4. Choose one:
-- Existing remote: click **Start Backup** to clone from the configured remote.
-- New local repo: click **Start Backup** to initialize locally, then use **Sync to Git**.
-5. Use **Sync to Git** from the My Skills toolbar.
+- Separate bundle ID, updater channel, config directory, repo path, and database file.
+- Can coexist with the original Skills Manager on the same machine.
 
-`Sync to Git` automatically handles pull, commit, and push based on current repo status.
-Each successful sync creates a snapshot version tag. You can open **Version History** in **My Skills**, inspect the timeline, and restore any snapshot as a new commit.
+## Product Structure
 
-### Authentication
+The current app is organized around these modules:
 
-- SSH URL (`git@github.com:...`): requires SSH key configured on your machine and added to GitHub.
-- HTTPS URL (`https://github.com/...`): push usually requires a Personal Access Token (PAT).
+- `Dashboard`
+- `Skills Management`
+- `Skills Store`
+- `Scenarios`
+- `Project Workspaces`
+- `Settings`
 
-> **Note:** The SQLite database (`skills-manager-plus.db` inside your current central repository, `~/.skills-manager-plus/skills-manager-plus.db` by default) is not included in Git — it stores metadata that can be rebuilt by scanning the skill files.
+Detailed usage guides for each module live in [docs/usage/README.md](./docs/usage/README.md).
+
+## Documentation
+
+- [Usage Overview](./docs/usage/overview.md)
+- [Dashboard](./docs/usage/dashboard.md)
+- [Skills Store](./docs/usage/skills-store.md)
+- [Skills Management](./docs/usage/skills-management.md)
+- [Scenarios](./docs/usage/scenarios.md)
+- [Project Workspaces](./docs/usage/project-workspaces.md)
+- [Settings](./docs/usage/settings.md)
+- [Git Backup](./docs/usage/git-backup.md)
 
 ## Supported Tools
 
 Cursor · Claude Code · Codex · OpenCode · Amp · Kilo Code · Roo Code · Goose · Gemini CLI · GitHub Copilot · Windsurf · TRAE IDE · Antigravity · Clawdbot · Droid
 
-You can also add custom tools in **Settings** and manage their skills the same way.
+You can also add custom tools in `Settings`.
 
-## In-App Help
+## Quick Start
 
-The **Help** button in **Settings** mirrors the current product flow: scenarios, skill installation, My Skills management, Project Workspaces, Git backup, and environment-level settings. It is intended as the in-app version of this quick-start guide.
+1. Create or switch to a scenario.
+2. Open `Skills Store` to import skills from marketplace, Git, local folders, ClawHub, or plugins.
+3. Open `Skills Management` to decide which skills belong to the current scenario.
+4. Sync enabled skills to installed tools.
+5. Use `Project Workspaces` if you need to compare or exchange project-local skills.
+6. Configure `Git Backup` if you want history, restore points, or multi-machine sync.
 
-## Tech Stack
-
-| Layer | Tech |
-|-------|------|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
-| Desktop | Tauri 2 |
-| Backend | Rust |
-| Storage | SQLite (`rusqlite`) |
-| i18n | react-i18next |
-
-## Acknowledgments
-
-This project is a fork of the original [skills-manager](https://github.com/xingkongliang/skills-manager) by [@JayTL00](https://github.com/xingkongliang). Skills-Manager-Plus is maintained at [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus). We extend our gratitude to the original author for creating such an excellent tool for managing AI agent skills across multiple coding tools.
-
-**Original Project**: [https://github.com/xingkongliang/skills-manager](https://github.com/xingkongliang/skills-manager) (v1.14.1)
-
-We encourage you to check out the original project and show your support by starring it on GitHub.
-
-## Getting Started
+## Development
 
 ### Prerequisites
 
@@ -156,7 +121,7 @@ We encourage you to check out the original project and show your support by star
 - Rust toolchain
 - [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your OS
 
-### Development
+### Run Locally
 
 ```bash
 npm install
@@ -173,13 +138,19 @@ npm run tauri:build
 
 ### macOS: "App is damaged and can't be opened"
 
-If you see this error after downloading the app, run the following command in Terminal and then open the app again:
+If macOS blocks the downloaded app, run:
 
 ```bash
 xattr -cr /Applications/Skills-Manager-Plus.app
 ```
 
-Replace the path with wherever you placed the `.app` file if it's not in `/Applications`.
+Replace the path if the `.app` file is stored somewhere else.
+
+## Acknowledgments
+
+Skills-Manager-Plus is a fork of [skills-manager](https://github.com/xingkongliang/skills-manager) `v1.14.1`.
+
+Respect to the original project for building the foundation of cross-tool AI skill management.
 
 ## License
 
