@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.2] - 2026-04-27
+
+### Added
+- **Plugin Marketplace** — Add plugin markets from GitHub repositories, browse indexed plugins, and install bundled skills directly inside the app
+- **Installed Plugin Tracking** — Review which skills came from each plugin and manage plugin-market refresh cycles from a dedicated UI
+
+### Changed
+- **Product Rename** — Renamed the app to `Skills-Manager-Plus` across the desktop shell, in-app copy, updater metadata, and repository links
+- **Coexistence with Original App** — Switched the bundle identifier, default central repo path, config path, and database filename so this fork can be installed alongside the original Skills Manager without collisions
+- **Sidebar Branding** — Shortened the top-left brand presentation for a more compact title area while preserving the full product name in formal surfaces
+
+### Fixed
+- **Update Channel** — App update checks and release metadata now point to `arch3rPro/Skills-Manager-Plus` instead of the upstream repository
+- **Release Naming** — GitHub Releases now use the current product name consistently
 ## [1.20.1] - 2026-04-21
 
 ### Added

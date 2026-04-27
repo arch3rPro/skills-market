@@ -47,7 +47,7 @@ jobs:
       - name: Commit and tag
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          git add CHANGELOG.md package.json src-tauri/tauri.conf.json src/i18n/en.json src/i18n/zh.json
+          git add CHANGELOG.md CHANGELOG-zh.md package.json package-lock.json src-tauri/tauri.conf.json src/i18n/en.json src/i18n/zh.json src/i18n/zh-TW.json
           git commit -m "chore: bump version to ${VERSION}"
           git tag -a "v${VERSION}" -m "v${VERSION}"
           git push --follow-tags origin HEAD:main

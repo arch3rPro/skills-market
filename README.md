@@ -37,6 +37,12 @@
 <p align="center"><strong>Code Diff</strong></p>
 <p align="center"><img src="assets/CleanShot_20260419_003613@2x.png" width="800" alt="Code Diff" /></p>
 
+## New in 1.20.2
+
+- **Plugin Marketplace** — Add plugin markets from GitHub repositories, discover plugins, and install bundled skills without leaving the app.
+- **Parallel install-safe fork identity** — `Skills-Manager-Plus` now uses its own bundle ID, updater channel, config directory, central repo path, and database file so it can coexist with the original Skills Manager.
+- **Refined app branding** — The desktop shell, updater metadata, repository links, and sidebar branding are aligned with the current product name.
+
 ## Features
 
 - **Unified skill library** — Install skills from Git repos, local folders, `.zip` / `.skill` archives, or the [skills.sh](https://skills.sh) marketplace. Everything goes into one central repo, which defaults to `~/.skills-manager-plus` and can be customized in **Settings**.
@@ -52,6 +58,7 @@
 - **Custom tools** — Add your own agents/tools with custom skills directories, or override the default path for any built-in tool.
 - **Git backup and restore** — Version-control your skill library with Git for backup and multi-machine sync, then restore snapshot versions from Version History when needed.
 - **Flexible app settings** — Configure repo path, sync mode, default scenario, theme, text size, language, tray behavior, proxy, Git remote, and update checks in one place.
+- **Plugin ecosystem support** — Register plugin markets, browse bundled plugin packs, and install multiple related skills through one plugin entry.
 
 ### 🌟 Enhanced Features
 

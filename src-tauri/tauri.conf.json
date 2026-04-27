@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Skills-Manager-Plus",
-  "version": "1.20.1",
+  "version": "1.20.2",
   "identifier": "com.agentskills.skillsmanagerplus",
   "build": {
     "frontendDist": "../dist",
