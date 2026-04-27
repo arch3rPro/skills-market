@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Skills Manager"
+    "name": "Skills-Manager-Plus",
+    "sidebarName": "Skills+"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -14,7 +15,7 @@
   },
   "help": {
     "eyebrow": "Guide",
-    "title": "Quick Start for Skills Manager",
+    "title": "Quick Start for Skills-Manager-Plus",
     "description": "Fastest path: pick a scenario → install skills → manage them in My Skills. Press ⌘K anytime to open the command palette. Use Project Workspaces, Git backup, and Settings as needed.",
     "items": {
       "scenarios": {
@@ -493,7 +494,7 @@
     "language": "Language",
     "help": "Help",
     "about": "About",
-    "version": "Skills Manager 1.20.1",
+    "version": "Skills-Manager-Plus 1.20.1",
     "tagline": "Cross-platform. Minimal, efficient, seamless multi-scenario switching.",
     "checkUpdate": "Check for Updates",
     "checking": "Checking…",

@@ -116,7 +116,7 @@ export function Settings() {
   const [syncModeKey, setSyncModeKey] = useState<string | null>(null);
   const [customToolSyncModes, setCustomToolSyncModes] = useState<Map<string, string>>(new Map());
 
-  const GITHUB_URL = "https://github.com/xingkongliang/skills-manager";
+  const GITHUB_URL = "https://github.com/arch3rPro/Skills-Manager-Plus";
 
   const startEditPath = useCallback((key: string, currentPath: string) => {
     setEditingPathKey(key);

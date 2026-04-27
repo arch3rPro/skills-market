@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Skills Manager"
+    "name": "Skills-Manager-Plus",
+    "sidebarName": "Skills+"
   },
   "sidebar": {
     "dashboard": "數據看板",
@@ -14,7 +15,7 @@
   },
   "help": {
     "eyebrow": "操作指南",
-    "title": "快速上手 Skills Manager",
+    "title": "快速上手 Skills-Manager-Plus",
     "description": "最快的使用路徑是：先選場景，把 Skill 安裝進中央倉庫，再在「我的 Skills」裡決定目前場景要啟用什麼；只有在需要專案內協作、Git 備份或環境設定時，再到對應頁面處理。",
     "items": {
       "scenarios": {
@@ -460,7 +461,7 @@
     "language": "語言",
     "help": "說明",
     "about": "關於",
-    "version": "Skills Manager 1.6.0",
+    "version": "Skills-Manager-Plus 1.6.0",
     "tagline": "跨平台。極簡、高效、無感多場景切換。",
     "checkUpdate": "檢查更新",
     "checking": "檢查中…",

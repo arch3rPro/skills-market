@@ -174,15 +174,20 @@ export function Sidebar() {
         {/* Traffic-light safe zone */}
         <div className="h-[38px] shrink-0" />
         {/* App logo — sits below macOS window controls */}
-        <div className="flex items-center px-3 gap-3 pb-2.5 shrink-0">
+        <div className="flex items-center gap-2.5 px-3 pb-2.5 shrink-0">
           <img
             src="/icons/32x32.png"
             alt="logo"
             className="w-[24px] h-[24px] shrink-0"
           />
-          <span className="text-[16px] font-semibold text-secondary tracking-tight truncate leading-[22px]">
-            {t("app.name")}
-          </span>
+          <div className="min-w-0" title={t("app.name")}>
+            <span className="block truncate text-[14px] font-semibold text-secondary tracking-tight leading-[18px]">
+              {t("app.sidebarName")}
+            </span>
+            <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-faint leading-[12px]">
+              Manager Plus
+            </span>
+          </div>
         </div>
 
         {/* Nav */}

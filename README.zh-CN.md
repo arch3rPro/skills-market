@@ -2,7 +2,7 @@
   <img src="assets/icon.png" width="80" />
 </p>
 
-<h1 align="center">Skills Manager</h1>
+<h1 align="center">Skills-Manager-Plus</h1>
 
 <p align="center">
   一个应用，统一管理所有 AI 编码工具的 Skills。
@@ -12,10 +12,10 @@
   <a href="./README.md">English</a>
 </p>
 
-> **注意**: 本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，添加了额外的功能和改进。
+> **注意**: 本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 二次开发，当前仓库为 [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus)，并添加了额外功能与改进。
 
 <p align="center">
-  <img src="assets/demo-zh.gif" width="800" alt="Skills Manager 演示" />
+  <img src="assets/demo-zh.gif" width="800" alt="Skills-Manager-Plus 演示" />
 </p>
 
 | 我的 Skills | 项目 Skills |
@@ -24,7 +24,7 @@
 
 ## 功能
 
-- **统一技能库** — 从 Git 仓库、本地目录、`.zip` / `.skill` 文件或 [skills.sh](https://skills.sh) 市场安装技能，统一存放在 `~/.skills-manager`。
+- **统一技能库** — 从 Git 仓库、本地目录、`.zip` / `.skill` 文件或 [skills.sh](https://skills.sh) 市场安装技能，统一存放在 `~/.skills-manager-plus`。
 - **多工具同步** — 一键将技能同步到任意支持的工具，支持软链接和复制两种模式。
 - **项目 Skills** — 查看并管理任意项目的 `.claude/skills/` 目录，支持与中央库双向同步。支持嵌套 Skill 目录和导出时按 Agent 分配。
 - **关联工作区** — 将任意目录指定为 Skills 根目录，适合管理不在默认 Agent 路径下的 Skills。作为独立工作区管理，不参与全局场景同步。
@@ -38,7 +38,7 @@
 
 ### 🌟 增强功能
 
-本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，包含以下增强功能：
+本项目基于 [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) 进行二次开发，当前维护仓库为 [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus)，包含以下增强功能：
 
 #### 1. ClawHub 平台集成
 - **ClawHub API 客户端** — 内置 Rust 模块，无缝集成 ClawHub 平台
@@ -74,7 +74,7 @@
 
 ## Git 备份
 
-将 `~/.skills-manager/skills/` 备份到 Git 仓库，用于版本管理和多机同步。
+将 `~/.skills-manager-plus/skills/` 备份到 Git 仓库，用于版本管理和多机同步。
 
 ### 快速配置
 
@@ -94,7 +94,7 @@
 - SSH 地址（`git@github.com:...`）：需要先在本机配置 SSH Key，并将公钥添加到 GitHub。
 - HTTPS 地址（`https://github.com/...`）：推送通常需要 Personal Access Token（PAT）。
 
-> **注意：** SQLite 数据库（`~/.skills-manager/skills-manager.db`）不纳入 Git 管理，它存储的元数据可通过扫描技能文件重建。
+> **注意：** SQLite 数据库（`~/.skills-manager-plus/skills-manager-plus.db`）不纳入 Git 管理，它存储的元数据可通过扫描技能文件重建。
 
 ## 支持的工具
 
@@ -118,7 +118,7 @@ Cursor · Claude Code · Codex · OpenCode · Amp · Kilo Code · Roo Code · Go
 
 ## 致谢
 
-本项目基于原 [skills-manager](https://github.com/xingkongliang/skills-manager) 项目（作者：[@JayTL00](https://github.com/xingkongliang)）进行二次开发。我们衷心感谢原作者创建了如此优秀的工具，让我们能够跨多个编码工具管理 AI Agent 技能。
+本项目基于原 [skills-manager](https://github.com/xingkongliang/skills-manager) 项目（作者：[@JayTL00](https://github.com/xingkongliang)）进行二次开发，当前维护仓库为 [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus)。我们衷心感谢原作者创建了如此优秀的工具，让我们能够跨多个编码工具管理 AI Agent 技能。
 
 **原项目地址**: [https://github.com/xingkongliang/skills-manager](https://github.com/xingkongliang/skills-manager) (v1.14.1)
 
@@ -152,7 +152,7 @@ npm run tauri:build
 下载应用后如果出现此提示，在终端执行以下命令后重新打开即可：
 
 ```bash
-xattr -cr /Applications/skills-manager.app
+xattr -cr /Applications/Skills-Manager-Plus.app
 ```
 
 如果 `.app` 不在 `/Applications`，请替换为实际路径。

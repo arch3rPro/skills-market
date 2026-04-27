@@ -67,12 +67,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.13.3] - 2026-04-11
 
 ### Changed
-- Linking an external workspace no longer asks for a disabled-skills directory. Skills Manager now creates and uses a sibling `*-disabled` folder automatically, and gracefully degrades to read-only mode when that folder cannot be created.
+- Linking an external workspace no longer asks for a disabled-skills directory. Skills-Manager-Plus now creates and uses a sibling `*-disabled` folder automatically, and gracefully degrades to read-only mode when that folder cannot be created.
 
 ## [1.13.2] - 2026-04-11
 
 ### Fixed
-- Quitting Skills Manager on Linux no longer terminates other running applications or the desktop session (#47)
+- Quitting Skills-Manager-Plus on Linux no longer terminates other running applications or the desktop session (#47)
 
 ## [1.13.1] - 2026-04-10
 
@@ -303,7 +303,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - UI text from macOS-specific ("Open in Finder", "Built for macOS") to cross-platform wording
-- Settings page now displays dynamic repo path instead of hardcoded `~/.skills-manager/`
+- Settings page now displays dynamic repo path instead of hardcoded `~/.skills-manager-plus/`
 - CI Windows smoke check reduced to `cargo check` only (avoids duplicate frontend build)
 - Renamed `open_central_repo_in_finder` to `open_central_repo_folder` across backend and frontend
 
@@ -325,7 +325,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-03-08
 
 ### Added
-- Initial release of Skills Manager v2 with Tauri backend
+- Initial release of Skills-Manager-Plus v2 with Tauri backend
 - Scenario management: create, rename, delete, and switch scenarios
 - Scenario icons and sync engine improvements
 - Light/dark theme support with system preference detection

@@ -2,7 +2,7 @@
   <img src="assets/icon.png" width="80" />
 </p>
 
-<h1 align="center">Skills Manager</h1>
+<h1 align="center">Skills-Manager-Plus</h1>
 
 <p align="center">
   One app to manage AI agent skills across all your coding tools.
@@ -16,10 +16,10 @@
   <a href="https://buymeacoffee.com/jaytl">Buy me a coffee</a>
 </p>
 
-> **Note**: This is a fork based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) with additional features and improvements.
+> **Note**: This project is a fork based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager), published at [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus) with additional features and improvements.
 
 <p align="center">
-  <img src="assets/demo.gif" width="800" alt="Skills Manager Demo" />
+  <img src="assets/demo.gif" width="800" alt="Skills-Manager-Plus Demo" />
 </p>
 
 <p align="center"><strong>My Skills</strong></p>
@@ -39,7 +39,7 @@
 
 ## Features
 
-- **Unified skill library** — Install skills from Git repos, local folders, `.zip` / `.skill` archives, or the [skills.sh](https://skills.sh) marketplace. Everything goes into one central repo, which defaults to `~/.skills-manager` and can be customized in **Settings**.
+- **Unified skill library** — Install skills from Git repos, local folders, `.zip` / `.skill` archives, or the [skills.sh](https://skills.sh) marketplace. Everything goes into one central repo, which defaults to `~/.skills-manager-plus` and can be customized in **Settings**.
 - **Marketplace + AI search** — Browse popular skills from the marketplace, run keyword search, or enable SkillsMP AI search with your API key.
 - **Multi-tool sync** — Sync skills to any supported tool via symlink or copy with a single click.
 - **Project Workspaces** — View and manage project-local skill folders for supported agents, compare them with your central library, and sync changes in either direction. Supports nested skill directories and per-agent assignment when exporting.
@@ -55,7 +55,7 @@
 
 ### 🌟 Enhanced Features
 
-This fork is based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) and includes the following enhancements:
+This fork is based on [skills-manager v1.14.1](https://github.com/xingkongliang/skills-manager) and is maintained at [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus). It includes the following enhancements:
 
 #### 1. ClawHub Integration
 - **ClawHub API Client** — Built-in Rust module for seamless ClawHub platform integration
@@ -91,7 +91,7 @@ This fork is based on [skills-manager v1.14.1](https://github.com/xingkongliang/
 
 ## Git Backup
 
-Back up the `skills/` folder inside your current central repository to a Git repo for version history and multi-machine sync. By default this is `~/.skills-manager/skills/`.
+Back up the `skills/` folder inside your current central repository to a Git repo for version history and multi-machine sync. By default this is `~/.skills-manager-plus/skills/`.
 
 ### Quick setup
 
@@ -111,7 +111,7 @@ Each successful sync creates a snapshot version tag. You can open **Version Hist
 - SSH URL (`git@github.com:...`): requires SSH key configured on your machine and added to GitHub.
 - HTTPS URL (`https://github.com/...`): push usually requires a Personal Access Token (PAT).
 
-> **Note:** The SQLite database (`skills-manager.db` inside your current central repository, `~/.skills-manager/skills-manager.db` by default) is not included in Git — it stores metadata that can be rebuilt by scanning the skill files.
+> **Note:** The SQLite database (`skills-manager-plus.db` inside your current central repository, `~/.skills-manager-plus/skills-manager-plus.db` by default) is not included in Git — it stores metadata that can be rebuilt by scanning the skill files.
 
 ## Supported Tools
 
@@ -135,7 +135,7 @@ The **Help** button in **Settings** mirrors the current product flow: scenarios,
 
 ## Acknowledgments
 
-This project is a fork of the original [skills-manager](https://github.com/xingkongliang/skills-manager) by [@JayTL00](https://github.com/xingkongliang). We extend our gratitude to the original author for creating such an excellent tool for managing AI agent skills across multiple coding tools.
+This project is a fork of the original [skills-manager](https://github.com/xingkongliang/skills-manager) by [@JayTL00](https://github.com/xingkongliang). Skills-Manager-Plus is maintained at [arch3rPro/Skills-Manager-Plus](https://github.com/arch3rPro/Skills-Manager-Plus). We extend our gratitude to the original author for creating such an excellent tool for managing AI agent skills across multiple coding tools.
 
 **Original Project**: [https://github.com/xingkongliang/skills-manager](https://github.com/xingkongliang/skills-manager) (v1.14.1)
 
@@ -169,7 +169,7 @@ npm run tauri:build
 If you see this error after downloading the app, run the following command in Terminal and then open the app again:
 
 ```bash
-xattr -cr /Applications/skills-manager.app
+xattr -cr /Applications/Skills-Manager-Plus.app
 ```
 
 Replace the path with wherever you placed the `.app` file if it's not in `/Applications`.

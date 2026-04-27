@@ -67,12 +67,12 @@
 ## [1.13.3] - 2026-04-11
 
 ### 变更
-- 关联外部工作区时不再需要手动填写"停用 Skills 目录"。Skills Manager 现在会自动创建并使用同级的 `*-disabled` 目录；若该目录无法创建（例如只读位置），将优雅降级为只读模式。
+- 关联外部工作区时不再需要手动填写"停用 Skills 目录"。Skills-Manager-Plus 现在会自动创建并使用同级的 `*-disabled` 目录；若该目录无法创建（例如只读位置），将优雅降级为只读模式。
 
 ## [1.13.2] - 2026-04-11
 
 ### 修复
-- 在 Linux 上退出 Skills Manager 不会再误杀其他正在运行的应用或整个桌面会话（#47）
+- 在 Linux 上退出 Skills-Manager-Plus 不会再误杀其他正在运行的应用或整个桌面会话（#47）
 
 ## [1.13.1] - 2026-04-10
 
@@ -311,7 +311,7 @@
 
 ### 变更
 - UI 文本从 macOS 专用（"Open in Finder"、"Built for macOS"）改为跨平台措辞
-- 设置页显示动态仓库路径替代硬编码的 `~/.skills-manager/`
+- 设置页显示动态仓库路径替代硬编码的 `~/.skills-manager-plus/`
 - CI Windows 冒烟测试简化为仅 `cargo check`（避免重复前端构建）
 - 重命名 `open_central_repo_in_finder` 为 `open_central_repo_folder`
 
@@ -333,7 +333,7 @@
 ## [1.0.0] - 2025-03-08
 
 ### 新增
-- Skills Manager v2 首次发布，基于 Tauri 后端
+- Skills-Manager-Plus v2 首次发布，基于 Tauri 后端
 - 场景管理：创建、重命名、删除和切换场景
 - 场景图标和同步引擎改进
 - 亮色/暗色主题支持，跟随系统偏好

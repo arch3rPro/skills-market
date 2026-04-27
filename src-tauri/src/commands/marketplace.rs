@@ -326,7 +326,7 @@ pub async fn install_plugin_skills(
             .unwrap_or_else(|| {
                 dirs::data_dir()
                     .unwrap_or_else(|| std::path::PathBuf::from("."))
-                    .join("skills-manager")
+                    .join("skills-manager-plus")
                     .join("central-repo")
             });
 

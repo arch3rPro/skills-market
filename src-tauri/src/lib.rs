@@ -97,7 +97,13 @@ fn build_tray_menu<R: tauri::Runtime>(
     use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 
     let menu = Menu::new(app)?;
-    let app_name = MenuItem::with_id(app, "tray-app-name", "Skills Manager", false, None::<&str>)?;
+    let app_name = MenuItem::with_id(
+        app,
+        "tray-app-name",
+        "Skills-Manager-Plus",
+        false,
+        None::<&str>,
+    )?;
     menu.append(&app_name)?;
 
     let active_id = store.get_active_scenario_id().ok().flatten();
@@ -149,7 +155,13 @@ fn build_tray_menu<R: tauri::Runtime>(
     let second_separator = PredefinedMenuItem::separator(app)?;
     menu.append(&second_separator)?;
 
-    let show_item = MenuItem::with_id(app, "show", "Open Skills Manager", true, None::<&str>)?;
+    let show_item = MenuItem::with_id(
+        app,
+        "show",
+        "Open Skills-Manager-Plus",
+        true,
+        None::<&str>,
+    )?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     menu.append(&show_item)?;
     menu.append(&quit_item)?;
@@ -244,7 +256,7 @@ fn ensure_tray_icon(app: &tauri::AppHandle) -> tauri::Result<()> {
     let menu = build_tray_menu(app, &store)?;
 
     let mut builder = TrayIconBuilder::with_id(MAIN_TRAY_ID)
-        .tooltip("Skills Manager")
+        .tooltip("Skills-Manager-Plus")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {

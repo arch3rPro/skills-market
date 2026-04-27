@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Skills Manager"
+    "name": "Skills-Manager-Plus",
+    "sidebarName": "Skills+"
   },
   "sidebar": {
     "dashboard": "数据看板",
@@ -14,7 +15,7 @@
   },
   "help": {
     "eyebrow": "操作指南",
-    "title": "快速上手 Skills Manager",
+    "title": "快速上手 Skills-Manager-Plus",
     "description": "最快路径：选场景 → 安装 Skill → 在「我的 Skills」里管理启用状态。按 ⌘K 可随时呼出命令面板快速跳转。项目协作、Git 备份、环境配置等按需使用。",
     "items": {
       "scenarios": {
@@ -493,7 +494,7 @@
     "language": "语言",
     "help": "帮助",
     "about": "关于",
-    "version": "Skills Manager 1.20.1",
+    "version": "Skills-Manager-Plus 1.20.1",
     "tagline": "跨平台。极简、高效、无感多场景切换。",
     "checkUpdate": "检查更新",
     "checking": "检查中…",
