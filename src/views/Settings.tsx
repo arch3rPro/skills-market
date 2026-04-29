@@ -150,11 +150,11 @@ export function Settings() {
   const [syncModeKey, setSyncModeKey] = useState<string | null>(null);
   const [customToolSyncModes, setCustomToolSyncModes] = useState<Map<string, string>>(new Map());
 
-  const settingsTabs: Array<{ key: SettingsTab; label: string }> = [
-    { key: "global", label: t("settings.tabs.global") },
-    { key: "agents", label: t("settings.tabs.agents") },
-    { key: "data", label: t("settings.tabs.data") },
-    { key: "api", label: t("settings.tabs.api") },
+  const settingsTabs: Array<{ key: SettingsTab; label: string; icon: typeof Settings2 }> = [
+    { key: "global", label: t("settings.tabs.global"), icon: Settings2 },
+    { key: "agents", label: t("settings.tabs.agents"), icon: CheckCircle2 },
+    { key: "data", label: t("settings.tabs.data"), icon: DatabaseBackup },
+    { key: "api", label: t("settings.tabs.api"), icon: Key },
   ];
 
   const GITHUB_URL = "https://github.com/arch3rPro/Skills-Manager-Plus";
@@ -896,29 +896,34 @@ export function Settings() {
 
   return (
     <div className="app-page app-page-narrow">
-      <div className="app-page-header">
-        <h1 className="app-page-title flex items-center gap-2">
+      <div className="app-page-header border-b-0 pb-0">
+        <h1 className="app-page-title mb-4 flex items-center gap-2">
           <Settings2 className="w-4 h-4 text-accent" />
           {t("settings.title")}
         </h1>
-      </div>
 
-      <div className="mb-5 flex flex-wrap gap-1 rounded-[6px] border border-border-subtle bg-background p-1">
-        {settingsTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "h-8 rounded-[4px] px-3 text-[13px] font-medium transition-colors outline-none",
-              activeTab === tab.key
-                ? "bg-surface-active text-secondary shadow-sm"
-                : "text-muted hover:bg-surface-hover hover:text-tertiary"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <div className="flex gap-1 border-b border-border-subtle">
+          {settingsTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "mr-4 flex items-center gap-1.5 border-b-2 px-1 pb-1.5 text-[13px] font-medium transition-colors outline-none",
+                  isActive
+                    ? "border-accent text-accent"
+                    : "border-transparent text-muted hover:text-tertiary"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="space-y-6">
