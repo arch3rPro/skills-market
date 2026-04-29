@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.3] - 2026-04-29
+
+### Added
+- **Data Backup Management** — Add in-app SQLite import, export, backup, restore, rename, and delete controls for safer local data operations
+- **WebDAV Cloud Sync** — Add WebDAV snapshot upload/download support with provider presets, custom endpoints, sync metadata, and conflict-aware restore flows
+
+### Changed
+- **Settings Navigation** — Reorganize Settings into Global Settings, Agent Settings, Data Management, and API Management tabs using the same top-tab style as other pages
+- **Product Planning Docs** — Document the WebDAV cloud sync direction and related future sync planning
+
+### Fixed
+- **Custom WebDAV Preset** — Allow users to return to the custom preset after selecting another provider
+- **Custom WebDAV URL Restore** — Restore the user's custom server URL when switching back from a provider preset
+
+### Removed
+- No removals in this release
+
 ## [1.20.2] - 2026-04-27
 
 ### Added
