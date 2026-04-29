@@ -220,7 +220,11 @@ impl SkillStore {
             return Ok(vec![]);
         }
         let conn = self.conn.lock().unwrap();
-        let placeholders: Vec<String> = ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+        let placeholders: Vec<String> = ids
+            .iter()
+            .enumerate()
+            .map(|(i, _)| format!("?{}", i + 1))
+            .collect();
         let sql = format!(
             "SELECT id, name, description, source_type, source_ref, source_ref_resolved, source_subpath,
                     source_branch, source_revision, remote_revision, central_path, content_hash, enabled,
@@ -229,7 +233,8 @@ impl SkillStore {
             placeholders.join(", ")
         );
         let mut stmt = conn.prepare(&sql)?;
-        let params: Vec<&dyn rusqlite::ToSql> = ids.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+        let params: Vec<&dyn rusqlite::ToSql> =
+            ids.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
         let rows = stmt.query_map(params.as_slice(), map_skill_row)?;
         Ok(rows.filter_map(|r| r.ok()).collect())
     }
@@ -1201,7 +1206,11 @@ impl SkillStore {
             "INSERT INTO plugin_installs (id, market_id, plugin_name, skill_id, installed_at)
              VALUES (?1, ?2, ?3, ?4, ?5)",
             params![
-                rec.id, rec.market_id, rec.plugin_name, rec.skill_id, rec.installed_at,
+                rec.id,
+                rec.market_id,
+                rec.plugin_name,
+                rec.skill_id,
+                rec.installed_at,
             ],
         )?;
         Ok(())
@@ -1225,7 +1234,10 @@ impl SkillStore {
     }
 
     #[allow(dead_code)]
-    pub fn get_plugin_installs_for_market(&self, market_id: &str) -> Result<Vec<PluginInstallRecord>> {
+    pub fn get_plugin_installs_for_market(
+        &self,
+        market_id: &str,
+    ) -> Result<Vec<PluginInstallRecord>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, market_id, plugin_name, skill_id, installed_at
@@ -1254,18 +1266,28 @@ impl SkillStore {
     }
 
     #[allow(dead_code)]
-    pub fn get_plugin_installs_by_skill_ids(&self, skill_ids: &[String]) -> Result<Vec<PluginInstallRecord>> {
+    pub fn get_plugin_installs_by_skill_ids(
+        &self,
+        skill_ids: &[String],
+    ) -> Result<Vec<PluginInstallRecord>> {
         if skill_ids.is_empty() {
             return Ok(vec![]);
         }
         let conn = self.conn.lock().unwrap();
-        let placeholders: Vec<String> = skill_ids.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect();
+        let placeholders: Vec<String> = skill_ids
+            .iter()
+            .enumerate()
+            .map(|(i, _)| format!("?{}", i + 1))
+            .collect();
         let sql = format!(
             "SELECT id, market_id, plugin_name, skill_id, installed_at FROM plugin_installs WHERE skill_id IN ({}) ORDER BY installed_at",
             placeholders.join(", ")
         );
         let mut stmt = conn.prepare(&sql)?;
-        let params: Vec<&dyn rusqlite::ToSql> = skill_ids.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+        let params: Vec<&dyn rusqlite::ToSql> = skill_ids
+            .iter()
+            .map(|s| s as &dyn rusqlite::ToSql)
+            .collect();
         let rows = stmt.query_map(params.as_slice(), |row| {
             Ok(PluginInstallRecord {
                 id: row.get(0)?,

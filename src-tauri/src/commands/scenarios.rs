@@ -445,7 +445,8 @@ pub(crate) fn sync_scenario_skills(store: &SkillStore, scenario_id: &str) -> Res
 
             // Check for custom tool sync mode override first, then fall back to global sync_mode
             let custom_mode_key = format!("custom_tool_sync_mode:{}", adapter.key);
-            let effective_mode = store.get_setting(&custom_mode_key)
+            let effective_mode = store
+                .get_setting(&custom_mode_key)
                 .ok()
                 .flatten()
                 .or(configured_mode.clone());

@@ -392,8 +392,8 @@ fn backup_id_from_path(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::webdav_sync::{WebDavSyncSettings, WEBDAV_SETTINGS_KEY};
     use crate::core::skill_store::SkillStore;
+    use crate::core::webdav_sync::{WebDavSyncSettings, WEBDAV_SETTINGS_KEY};
 
     fn test_store(name: &str) -> (tempfile::TempDir, SkillStore) {
         let dir = tempfile::tempdir().unwrap();

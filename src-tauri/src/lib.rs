@@ -155,13 +155,7 @@ fn build_tray_menu<R: tauri::Runtime>(
     let second_separator = PredefinedMenuItem::separator(app)?;
     menu.append(&second_separator)?;
 
-    let show_item = MenuItem::with_id(
-        app,
-        "show",
-        "Open Skills-Manager-Plus",
-        true,
-        None::<&str>,
-    )?;
+    let show_item = MenuItem::with_id(app, "show", "Open Skills-Manager-Plus", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     menu.append(&show_item)?;
     menu.append(&quit_item)?;

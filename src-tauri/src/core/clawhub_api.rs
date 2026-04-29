@@ -187,8 +187,7 @@ pub fn get_skill_detail(
         .get("skill")
         .ok_or_else(|| anyhow::anyhow!("Skill not found in response"))?;
 
-    serde_json::from_value::<ClawhubSkill>(skill.clone())
-        .context("Failed to parse skill detail")
+    serde_json::from_value::<ClawhubSkill>(skill.clone()).context("Failed to parse skill detail")
 }
 
 #[cfg(test)]
@@ -197,7 +196,10 @@ mod tests {
 
     #[test]
     fn sort_type_from_str_handles_all_variants() {
-        assert!(matches!(SortType::from_str("downloads"), SortType::Downloads));
+        assert!(matches!(
+            SortType::from_str("downloads"),
+            SortType::Downloads
+        ));
         assert!(matches!(SortType::from_str("stars"), SortType::Stars));
         assert!(matches!(SortType::from_str("rating"), SortType::Stars));
         assert!(matches!(SortType::from_str("trending"), SortType::Trending));

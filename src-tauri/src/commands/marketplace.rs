@@ -3,8 +3,7 @@ use tauri::State;
 
 use crate::core::{
     error::AppError,
-    git_fetcher,
-    skill_metadata,
+    git_fetcher, skill_metadata,
     skill_store::{
         PluginCacheRecord, PluginInstallRecord, PluginMarketRecord, SkillRecord, SkillStore,
     },
@@ -53,8 +52,13 @@ pub async fn add_plugin_market(
         git_fetcher::validate_git_url(&parsed.clone_url)
             .map_err(|e| AppError::invalid_input(e.to_string()))?;
 
-        if store_clone.get_plugin_market_by_url(&parsed.clone_url)?.is_some() {
-            return Err(AppError::invalid_input("Market with this URL already exists"));
+        if store_clone
+            .get_plugin_market_by_url(&parsed.clone_url)?
+            .is_some()
+        {
+            return Err(AppError::invalid_input(
+                "Market with this URL already exists",
+            ));
         }
 
         let proxy_url = store_clone.proxy_url();
@@ -136,9 +140,7 @@ pub async fn remove_plugin_market(
 ) -> Result<(), AppError> {
     let store_clone = store.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        store_clone
-            .delete_plugin_market(&id)
-            .map_err(AppError::db)
+        store_clone.delete_plugin_market(&id).map_err(AppError::db)
     })
     .await??;
     Ok(())
@@ -437,11 +439,11 @@ pub async fn list_plugin_installed_skills(
             .collect();
 
         let skill_ids: Vec<String> = installs.iter().map(|i| i.skill_id.clone()).collect();
-        let skills = store_clone.get_skills_by_ids(&skill_ids).unwrap_or_default();
-        let skill_map: std::collections::HashMap<String, SkillRecord> = skills
-            .into_iter()
-            .map(|s| (s.id.clone(), s))
-            .collect();
+        let skills = store_clone
+            .get_skills_by_ids(&skill_ids)
+            .unwrap_or_default();
+        let skill_map: std::collections::HashMap<String, SkillRecord> =
+            skills.into_iter().map(|s| (s.id.clone(), s)).collect();
 
         let dtos: Vec<PluginInstalledSkillDto> = installs
             .into_iter()
@@ -545,12 +547,17 @@ fn try_discover_from_marketplace_json(
             .unwrap_or(source)
             .to_string();
 
-        let (version, description) = read_plugin_json_metadata(&plugin_dir)
-            .unwrap_or_else(|| {
-                let ver = entry.get("version").and_then(|v| v.as_str()).map(|s| s.to_string());
-                let desc = entry.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
-                (ver, desc)
-            });
+        let (version, description) = read_plugin_json_metadata(&plugin_dir).unwrap_or_else(|| {
+            let ver = entry
+                .get("version")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let desc = entry
+                .get("description")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            (ver, desc)
+        });
 
         let skill_names = discover_skill_names_in_plugin_dir(&plugin_dir);
 
@@ -618,10 +625,7 @@ fn try_discover_from_plugin_dirs(
     found_any
 }
 
-fn discover_skills_as_plugins(
-    repo_dir: &std::path::Path,
-    plugins: &mut Vec<DiscoveredPlugin>,
-) {
+fn discover_skills_as_plugins(repo_dir: &std::path::Path, plugins: &mut Vec<DiscoveredPlugin>) {
     let mut skills: Vec<(std::path::PathBuf, String)> = Vec::new();
     scan_skills_recursive(repo_dir, repo_dir, &mut skills);
 
@@ -688,7 +692,10 @@ fn read_plugin_json_metadata(
     let content = std::fs::read_to_string(&plugin_json).ok()?;
     let json: serde_json::Value = serde_json::from_str(&content).ok()?;
 
-    let version = json.get("version").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let version = json
+        .get("version")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let description = json
         .get("description")
         .and_then(|v| v.as_str())
@@ -718,7 +725,10 @@ fn discover_skill_names_in_plugin_dir(plugin_dir: &std::path::Path) -> Vec<Strin
     }
 
     if names.is_empty() && skill_metadata::is_valid_skill_dir(plugin_dir) {
-        if let Some(name) = plugin_dir.file_name().map(|n| n.to_string_lossy().to_string()) {
+        if let Some(name) = plugin_dir
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+        {
             names.push(name);
         }
     }

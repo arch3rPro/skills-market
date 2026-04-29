@@ -15,12 +15,7 @@ fn match_imported_skill_id(
 ) -> Option<String> {
     let found_path = canonicalize_lossy(&rec.found_path);
     if let Some(existing) = managed_skills.iter().find(|skill| {
-        skill
-            .source_ref
-            .as_deref()
-            .map(canonicalize_lossy)
-            .as_ref()
-            == Some(&found_path)
+        skill.source_ref.as_deref().map(canonicalize_lossy).as_ref() == Some(&found_path)
             || skill
                 .source_ref_resolved
                 .as_deref()

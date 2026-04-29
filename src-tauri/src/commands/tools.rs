@@ -148,7 +148,8 @@ fn sync_active_scenario_to_tool(store: &SkillStore, tool_key: &str) {
 
         // Check for custom tool sync mode override first, then fall back to global sync_mode
         let custom_mode_key = format!("custom_tool_sync_mode:{}", tool_key);
-        let effective_mode = store.get_setting(&custom_mode_key)
+        let effective_mode = store
+            .get_setting(&custom_mode_key)
             .ok()
             .flatten()
             .or_else(|| store.get_setting("sync_mode").ok().flatten());
@@ -531,7 +532,9 @@ pub async fn set_custom_tool_sync_mode(
     let store = store.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let setting_key = format!("custom_tool_sync_mode:{}", key);
-        store.set_setting(&setting_key, &mode).map_err(AppError::db)?;
+        store
+            .set_setting(&setting_key, &mode)
+            .map_err(AppError::db)?;
 
         // Re-sync active scenario skills to this tool with the new mode
         let adapter = tool_adapters::find_adapter_with_store(&store, &key)
