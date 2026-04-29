@@ -26,6 +26,14 @@ By default this lives under:
 
 Restoring a version creates a new restore commit instead of deleting later history. That keeps recovery operations safer and auditable.
 
+## Git Backup and WebDAV Cloud Sync
+
+`Git Backup` and `WebDAV Cloud Sync` solve different problems.
+
+`Git Backup` gives the central Skills files version history and Git-based sync. `WebDAV Cloud Sync` transfers a full app-state snapshot, including database metadata and Skills files.
+
+After restoring from WebDAV, Git Backup may show local file changes. The app does not automatically commit or push those changes; review them before running Git sync.
+
 ## Important Note
 
 The SQLite database is not included in Git backup. The app treats the skill files as the durable source and can rebuild metadata by scanning them again.

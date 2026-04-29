@@ -4,10 +4,15 @@ use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use super::crypto;
+use super::{crypto, webdav_sync::WEBDAV_SETTINGS_KEY};
 
 /// Settings keys whose values are encrypted at rest with AES-256-GCM.
-pub(crate) const SENSITIVE_KEYS: &[&str] = &["proxy_url", "git_backup_remote_url", "skillsmp_api_key"];
+pub(crate) const SENSITIVE_KEYS: &[&str] = &[
+    "proxy_url",
+    "git_backup_remote_url",
+    "skillsmp_api_key",
+    WEBDAV_SETTINGS_KEY,
+];
 
 pub struct SkillStore {
     pub(crate) conn: Mutex<Connection>,
