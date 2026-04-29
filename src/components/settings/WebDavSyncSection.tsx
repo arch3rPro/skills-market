@@ -61,6 +61,7 @@ export function WebDavSyncSection() {
   const [busy, setBusy] = useState<BusyState>("loading");
   const [remoteInfo, setRemoteInfo] = useState<api.RemoteSnapshotInfo | null>(null);
   const [presetId, setPresetId] = useState<PresetId>("custom");
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
 
   const actionButtonClass =
     "inline-flex h-8 items-center gap-1.5 rounded-[4px] border px-2.5 text-[13px] font-medium transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-60";
@@ -75,8 +76,10 @@ export function WebDavSyncSection() {
       .then((value) => {
         if (!cancelled) {
           const normalized = normalizeSettings(value);
+          const loadedPreset = selectedPreset(normalized.baseUrl);
           setSettings(normalized);
-          setPresetId(selectedPreset(normalized.baseUrl));
+          setPresetId(loadedPreset);
+          setCustomBaseUrl(loadedPreset === "custom" ? normalized.baseUrl : "");
         }
       })
       .catch((error) => {
@@ -112,11 +115,19 @@ export function WebDavSyncSection() {
     }
   };
 
-  const handlePresetChange = (presetId: string) => {
-    const preset = PRESETS.find((item) => item.id === presetId);
+  const handlePresetChange = (nextPresetId: string) => {
+    const preset = PRESETS.find((item) => item.id === nextPresetId);
     if (!preset) return;
     setPresetId(preset.id);
-    if (preset.id === "custom") return;
+    if (preset.id === "custom") {
+      if (settings.baseUrl !== customBaseUrl) {
+        updateSettings({ baseUrl: customBaseUrl });
+      }
+      return;
+    }
+    if (presetId === "custom") {
+      setCustomBaseUrl(settings.baseUrl);
+    }
     updateSettings({ baseUrl: preset.baseUrl });
   };
 
@@ -247,8 +258,13 @@ export function WebDavSyncSection() {
                     type="text"
                     value={settings.baseUrl}
                     onChange={(event) => {
-                      setPresetId(selectedPreset(event.target.value));
-                      updateSettings({ baseUrl: event.target.value });
+                      const nextBaseUrl = event.target.value;
+                      const nextPreset = selectedPreset(nextBaseUrl);
+                      setPresetId(nextPreset);
+                      if (nextPreset === "custom") {
+                        setCustomBaseUrl(nextBaseUrl);
+                      }
+                      updateSettings({ baseUrl: nextBaseUrl });
                     }}
                     placeholder={t("settings.webdavSync.baseUrlPlaceholder")}
                     className={`${fieldClass} w-full font-mono`}
