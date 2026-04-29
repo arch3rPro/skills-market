@@ -257,6 +257,7 @@ mod tests {
             tool: "cursor".to_string(),
             found_path: path.to_string(),
             name_guess: Some(name.to_string()),
+            description: None,
             fingerprint: fingerprint.map(str::to_string),
             found_at: 0,
             imported_skill_id: None,

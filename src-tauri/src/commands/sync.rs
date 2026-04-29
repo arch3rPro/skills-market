@@ -56,7 +56,7 @@ fn sync_skill_to_tool_internal(
 
     let source = PathBuf::from(&skill.central_path);
     let target = adapter.skills_dir().join(&skill.name);
-    
+
     // Check for custom tool sync mode override first, then fall back to global sync_mode
     let custom_mode_key = format!("custom_tool_sync_mode:{}", tool);
     let custom_mode = store.get_setting(&custom_mode_key)
@@ -64,12 +64,12 @@ fn sync_skill_to_tool_internal(
         .flatten();
     let global_mode = store.get_setting("sync_mode").ok().flatten();
     let configured_mode = custom_mode.clone().or(global_mode.clone());
-    
+
     log::debug!(
         "Sync skill {} to {}: custom_mode={:?}, global_mode={:?}, using_mode={:?}",
         skill_id, tool, custom_mode, global_mode, configured_mode
     );
-    
+
     let mode = sync_engine::sync_mode_for_tool(tool, configured_mode.as_deref());
     let actual_mode = sync_engine::sync_skill(&source, &target, mode).map_err(AppError::io)?;
 

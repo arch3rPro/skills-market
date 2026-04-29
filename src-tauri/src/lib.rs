@@ -462,6 +462,14 @@ pub fn run() {
             commands::settings::check_app_update,
             commands::settings::app_exit,
             commands::settings::hide_to_tray,
+            // Data backup
+            commands::data_backup::export_data_backup,
+            commands::data_backup::import_data_backup,
+            commands::data_backup::create_data_backup,
+            commands::data_backup::list_data_backups,
+            commands::data_backup::restore_data_backup,
+            commands::data_backup::rename_data_backup,
+            commands::data_backup::delete_data_backup,
             // Git Backup
             commands::git_backup::git_backup_status,
             commands::git_backup::git_backup_init,

@@ -1,4 +1,5 @@
 pub mod browse;
+pub mod data_backup;
 pub mod git_backup;
 pub mod marketplace;
 pub mod projects;

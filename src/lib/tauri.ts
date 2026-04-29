@@ -485,6 +485,35 @@ export interface AppUpdateInfo {
 export const checkAppUpdate = () =>
   invoke<AppUpdateInfo>("check_app_update");
 
+// ── Data Backup ──
+
+export interface DataBackupEntry {
+  filename: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export const exportDataBackup = (targetPath: string) =>
+  invoke<void>("export_data_backup", { targetPath });
+
+export const importDataBackup = (sourcePath: string) =>
+  invoke<string>("import_data_backup", { sourcePath });
+
+export const createDataBackup = () =>
+  invoke<string>("create_data_backup");
+
+export const listDataBackups = () =>
+  invoke<DataBackupEntry[]>("list_data_backups");
+
+export const restoreDataBackup = (filename: string) =>
+  invoke<string>("restore_data_backup", { filename });
+
+export const renameDataBackup = (oldFilename: string, newName: string) =>
+  invoke<string>("rename_data_backup", { oldFilename, newName });
+
+export const deleteDataBackup = (filename: string) =>
+  invoke<void>("delete_data_backup", { filename });
+
 // ── Git Backup ──
 
 export interface GitBackupStatus {

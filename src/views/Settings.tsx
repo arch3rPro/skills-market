@@ -17,6 +17,9 @@ import {
   Monitor,
   BookOpen,
   Download,
+  FileDown,
+  FileUp,
+  DatabaseBackup,
   Type,
   Key,
   Pencil,
@@ -33,7 +36,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { check as checkUpdater } from "@tauri-apps/plugin-updater";
-import { open as dialogOpen, confirm as dialogConfirm } from "@tauri-apps/plugin-dialog";
+import { open as dialogOpen, confirm as dialogConfirm, save as dialogSave } from "@tauri-apps/plugin-dialog";
 import { cn } from "../utils";
 import { useApp } from "../context/AppContext";
 import { useThemeContext } from "../context/ThemeContext";
@@ -73,6 +76,30 @@ function compactHomePath(path: string) {
     .replace(/^[A-Za-z]:\\Users\\[^\\]+/, "~");
 }
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatBackupTime(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+function displayBackupName(filename: string) {
+  return filename.replace(/\.db$/i, "");
+}
+
+function errorMessage(error: unknown) {
+  if (error && typeof error === "object" && "message" in error) {
+    return String((error as { message?: unknown }).message);
+  }
+  return String(error);
+}
+
 export function Settings() {
   const { t, i18n } = useTranslation();
   const { tools, scenarios, refreshTools, openHelp } = useApp();
@@ -102,6 +129,9 @@ export function Settings() {
   const [skillsmpSaving, setSkillsmpSaving] = useState(false);
   const [clawhubApiKey, setClawhubApiKey] = useState("");
   const [clawhubSaving, setClawhubSaving] = useState(false);
+  const [dataBackups, setDataBackups] = useState<api.DataBackupEntry[]>([]);
+  const [dataBackupsLoading, setDataBackupsLoading] = useState(false);
+  const [dataBackupBusy, setDataBackupBusy] = useState<string | null>(null);
   // Agent path editing
   const [editingPathKey, setEditingPathKey] = useState<string | null>(null);
   const [editingPathValue, setEditingPathValue] = useState("");
@@ -152,6 +182,17 @@ export function Settings() {
       setter(selected);
     }
   };
+
+  const loadDataBackups = useCallback(async () => {
+    setDataBackupsLoading(true);
+    try {
+      setDataBackups(await api.listDataBackups());
+    } catch (error) {
+      console.error("Failed to load data backups", error);
+    } finally {
+      setDataBackupsLoading(false);
+    }
+  }, []);
 
   const generateCustomAgentKey = useCallback(
     (name: string) => {
@@ -235,6 +276,7 @@ export function Settings() {
       setCentralRepoPathInput(path);
     }).catch(() => {});
     api.getCentralRepoPathOverride().then(setCentralRepoPathOverride).catch(() => {});
+    loadDataBackups();
 
     (async () => {
       const savedRemote = (await api.getSettings("git_backup_remote_url").catch(() => null))?.trim() || "";
@@ -251,7 +293,7 @@ export function Settings() {
         api.setSettings("git_backup_remote_url", detectedRemote).catch(() => {});
       }
     })();
-  }, []);
+  }, [loadDataBackups]);
 
   // Load custom tool sync modes
   useEffect(() => {
@@ -480,6 +522,107 @@ export function Settings() {
       toast.error(t("common.error"));
     } finally {
       setGitRemoteSaving(false);
+    }
+  };
+
+  const reloadAfterDataRestore = () => {
+    window.setTimeout(() => window.location.reload(), 900);
+  };
+
+  const handleExportDataBackup = async () => {
+    const target = await dialogSave({
+      defaultPath: `skills-manager-plus-${new Date().toISOString().slice(0, 10)}.sql`,
+      filters: [{ name: "SQL", extensions: ["sql"] }],
+    });
+    if (!target) return;
+    setDataBackupBusy("export");
+    try {
+      await api.exportDataBackup(target);
+      toast.success(t("settings.dataBackupExportSuccess"));
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDataBackupBusy(null);
+    }
+  };
+
+  const handleImportDataBackup = async () => {
+    const selected = await dialogOpen({
+      multiple: false,
+      filters: [{ name: "SQL", extensions: ["sql"] }],
+    });
+    if (!selected || typeof selected !== "string") return;
+    const confirmed = await dialogConfirm(t("settings.dataBackupImportConfirm"));
+    if (!confirmed) return;
+    setDataBackupBusy("import");
+    try {
+      const safetyId = await api.importDataBackup(selected);
+      toast.success(t("settings.dataBackupImportSuccess", { id: safetyId }));
+      await loadDataBackups();
+      reloadAfterDataRestore();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDataBackupBusy(null);
+    }
+  };
+
+  const handleCreateDataBackup = async () => {
+    setDataBackupBusy("create");
+    try {
+      const id = await api.createDataBackup();
+      toast.success(t("settings.dataBackupCreateSuccess", { id }));
+      await loadDataBackups();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDataBackupBusy(null);
+    }
+  };
+
+  const handleRestoreDataBackup = async (filename: string) => {
+    const confirmed = await dialogConfirm(t("settings.dataBackupRestoreConfirm", { name: displayBackupName(filename) }));
+    if (!confirmed) return;
+    setDataBackupBusy(`restore:${filename}`);
+    try {
+      const safetyId = await api.restoreDataBackup(filename);
+      toast.success(t("settings.dataBackupRestoreSuccess", { id: safetyId }));
+      await loadDataBackups();
+      reloadAfterDataRestore();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDataBackupBusy(null);
+    }
+  };
+
+  const handleRenameDataBackup = async (filename: string) => {
+    const nextName = window.prompt(t("settings.dataBackupRenamePrompt"), displayBackupName(filename));
+    if (!nextName || nextName.trim() === displayBackupName(filename)) return;
+    setDataBackupBusy(`rename:${filename}`);
+    try {
+      await api.renameDataBackup(filename, nextName.trim());
+      toast.success(t("settings.dataBackupRenameSuccess"));
+      await loadDataBackups();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDataBackupBusy(null);
+    }
+  };
+
+  const handleDeleteDataBackup = async (filename: string) => {
+    const confirmed = await dialogConfirm(t("settings.dataBackupDeleteConfirm", { name: displayBackupName(filename) }));
+    if (!confirmed) return;
+    setDataBackupBusy(`delete:${filename}`);
+    try {
+      await api.deleteDataBackup(filename);
+      toast.success(t("settings.dataBackupDeleteSuccess"));
+      await loadDataBackups();
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setDataBackupBusy(null);
     }
   };
 
@@ -1200,6 +1343,145 @@ export function Settings() {
                   {t("settings.trayIcon_off")}
                 </button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Data management */}
+        <section>
+          <h2 className="app-section-title mb-3">
+            {t("settings.dataManagement")}
+          </h2>
+          <div className="app-panel overflow-hidden divide-y divide-border-subtle">
+            <div className="px-4 py-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[13px] text-secondary font-medium mb-0.5">
+                    {t("settings.dataImportExport")}
+                  </h3>
+                  <p className="text-[13px] text-muted">
+                    {t("settings.dataImportExportDesc")}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleImportDataBackup}
+                    disabled={!!dataBackupBusy}
+                    className={`${actionButtonClass} bg-surface-hover hover:bg-surface-active text-tertiary border-border`}
+                  >
+                    {dataBackupBusy === "import" ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <FileUp className="w-3 h-3" />
+                    )}
+                    {t("settings.dataImportSql")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportDataBackup}
+                    disabled={!!dataBackupBusy}
+                    className={`${actionButtonClass} bg-surface-hover hover:bg-surface-active text-tertiary border-border`}
+                  >
+                    {dataBackupBusy === "export" ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <FileDown className="w-3 h-3" />
+                    )}
+                    {t("settings.dataExportSql")}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-3">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[13px] text-secondary font-medium mb-0.5">
+                    {t("settings.dataBackupRestore")}
+                  </h3>
+                  <p className="text-[13px] text-muted">
+                    {t("settings.dataBackupRestoreDesc")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCreateDataBackup}
+                  disabled={!!dataBackupBusy}
+                  className={`${actionButtonClass} bg-accent text-white border-accent hover:opacity-90`}
+                >
+                  {dataBackupBusy === "create" ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <DatabaseBackup className="w-3 h-3" />
+                  )}
+                  {t("settings.dataBackupNow")}
+                </button>
+              </div>
+
+              {dataBackupsLoading ? (
+                <div className="py-2 text-[13px] text-muted">{t("common.loading")}</div>
+              ) : dataBackups.length === 0 ? (
+                <div className="rounded-[4px] border border-dashed border-border-subtle px-3 py-3 text-[13px] text-muted">
+                  {t("settings.dataBackupEmpty")}
+                </div>
+              ) : (
+                <div className="max-h-56 space-y-1.5 overflow-y-auto">
+                  {dataBackups.map((backup) => {
+                    const restoring = dataBackupBusy === `restore:${backup.filename}`;
+                    const renaming = dataBackupBusy === `rename:${backup.filename}`;
+                    const deleting = dataBackupBusy === `delete:${backup.filename}`;
+                    return (
+                      <div
+                        key={backup.filename}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] bg-surface-hover px-3 py-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-mono text-[12px] text-secondary">
+                            {displayBackupName(backup.filename)}
+                          </div>
+                          <div className="text-[12px] text-muted">
+                            {formatBackupTime(backup.createdAt)} · {formatBytes(backup.sizeBytes)}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleRenameDataBackup(backup.filename)}
+                            disabled={!!dataBackupBusy}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-surface-active hover:text-tertiary disabled:opacity-60"
+                            title={t("common.rename")}
+                          >
+                            {renaming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Pencil className="h-3.5 w-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDataBackup(backup.filename)}
+                            disabled={!!dataBackupBusy}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted hover:bg-surface-active hover:text-red-500 disabled:opacity-60"
+                            title={t("common.delete")}
+                          >
+                            {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreDataBackup(backup.filename)}
+                            disabled={!!dataBackupBusy}
+                            className={`${actionButtonClass} h-7 bg-surface hover:bg-surface-active text-tertiary border-border`}
+                          >
+                            {restoring ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-3 h-3" />
+                            )}
+                            {t("settings.dataRestore")}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </section>

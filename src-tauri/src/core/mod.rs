@@ -2,6 +2,7 @@ pub mod central_repo;
 pub mod clawhub_api;
 pub mod content_hash;
 pub mod crypto;
+pub mod data_backup;
 pub mod error;
 pub mod file_watcher;
 pub mod git_backup;

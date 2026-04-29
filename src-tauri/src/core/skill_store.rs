@@ -7,11 +7,12 @@ use std::sync::Mutex;
 use super::crypto;
 
 /// Settings keys whose values are encrypted at rest with AES-256-GCM.
-const SENSITIVE_KEYS: &[&str] = &["proxy_url", "git_backup_remote_url", "skillsmp_api_key"];
+pub(crate) const SENSITIVE_KEYS: &[&str] = &["proxy_url", "git_backup_remote_url", "skillsmp_api_key"];
 
 pub struct SkillStore {
-    conn: Mutex<Connection>,
-    secret_key: [u8; 32],
+    pub(crate) conn: Mutex<Connection>,
+    pub(crate) db_path: PathBuf,
+    pub(crate) secret_key: [u8; 32],
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -144,6 +145,7 @@ impl SkillStore {
 
         Ok(Self {
             conn: Mutex::new(conn),
+            db_path: db_path.clone(),
             secret_key,
         })
     }

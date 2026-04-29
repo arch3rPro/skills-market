@@ -283,7 +283,7 @@ pub async fn add_skill_to_scenario(
                     let source = PathBuf::from(&skill.central_path);
                     for adapter in &adapters {
                         let target = adapter.skills_dir().join(&skill.name);
-                        
+
                         // Check for custom tool sync mode override first, then fall back to global sync_mode
                         let custom_mode_key = format!("custom_tool_sync_mode:{}", adapter.key);
                         let custom_mode = store.get_setting(&custom_mode_key)
@@ -291,12 +291,12 @@ pub async fn add_skill_to_scenario(
                             .flatten();
                         let global_mode = configured_mode.clone();
                         let effective_mode = custom_mode.clone().or(global_mode.clone());
-                        
+
                         log::debug!(
                             "Scenario sync skill {} to {}: custom_mode={:?}, global_mode={:?}, using_mode={:?}",
                             skill_id, adapter.key, custom_mode, global_mode, effective_mode
                         );
-                        
+
                         let mode = sync_engine::sync_mode_for_tool(
                             &adapter.key,
                             effective_mode.as_deref(),
@@ -442,7 +442,7 @@ pub(crate) fn sync_scenario_skills(store: &SkillStore, scenario_id: &str) -> Res
             enabled_installed_adapters_for_scenario_skill(store, scenario_id, &skill.id)?;
         for adapter in &adapters {
             let target = adapter.skills_dir().join(&skill.name);
-            
+
             // Check for custom tool sync mode override first, then fall back to global sync_mode
             let custom_mode_key = format!("custom_tool_sync_mode:{}", adapter.key);
             let effective_mode = store.get_setting(&custom_mode_key)
