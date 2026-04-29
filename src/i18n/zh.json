@@ -418,6 +418,12 @@
   },
   "settings": {
     "title": "设置",
+    "tabs": {
+      "global": "全局设置",
+      "agents": "Agent 设置",
+      "data": "数据管理",
+      "api": "API 管理"
+    },
     "supportedAgents": "支持的 Agent",
     "agentsSummary": "已检测 {{detected}} 个，已启用 {{enabled}} 个，自定义 {{custom}} 个",
     "detectedAgents": "已检测",

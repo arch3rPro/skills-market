@@ -53,6 +53,8 @@ const TEXT_SIZE_ZOOM_MAP: Record<string, string> = {
   xlarge: "1.2",
 };
 
+type SettingsTab = "global" | "agents" | "data" | "api";
+
 const MAINSTREAM_AGENT_KEYS = new Set([
   "claude_code",
   "cursor",
@@ -104,6 +106,7 @@ function errorMessage(error: unknown) {
 export function Settings() {
   const { t, i18n } = useTranslation();
   const { tools, scenarios, refreshTools, openHelp } = useApp();
+  const [activeTab, setActiveTab] = useState<SettingsTab>("global");
   const [togglingTools, setTogglingTools] = useState<Set<string>>(new Set());
   const { theme, setTheme } = useThemeContext();
   const [syncMode, setSyncMode] = useState("symlink");
@@ -146,6 +149,13 @@ export function Settings() {
   // Custom agent sync mode
   const [syncModeKey, setSyncModeKey] = useState<string | null>(null);
   const [customToolSyncModes, setCustomToolSyncModes] = useState<Map<string, string>>(new Map());
+
+  const settingsTabs: Array<{ key: SettingsTab; label: string }> = [
+    { key: "global", label: t("settings.tabs.global") },
+    { key: "agents", label: t("settings.tabs.agents") },
+    { key: "data", label: t("settings.tabs.data") },
+    { key: "api", label: t("settings.tabs.api") },
+  ];
 
   const GITHUB_URL = "https://github.com/arch3rPro/Skills-Manager-Plus";
 
@@ -893,8 +903,27 @@ export function Settings() {
         </h1>
       </div>
 
+      <div className="mb-5 flex flex-wrap gap-1 rounded-[6px] border border-border-subtle bg-background p-1">
+        {settingsTabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              "h-8 rounded-[4px] px-3 text-[13px] font-medium transition-colors outline-none",
+              activeTab === tab.key
+                ? "bg-surface-active text-secondary shadow-sm"
+                : "text-muted hover:bg-surface-hover hover:text-tertiary"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
         {/* Agent status */}
+        {activeTab === "agents" && (
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -1051,8 +1080,10 @@ export function Settings() {
             )}
           </div>
         </section>
+        )}
 
         {/* Global config */}
+        {activeTab === "global" && (
         <section>
           <h2 className="app-section-title mb-3">
             {t("settings.globalConfig")}
@@ -1347,8 +1378,10 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Data management */}
+        {activeTab === "data" && (
         <section>
           <h2 className="app-section-title mb-3">
             {t("settings.dataManagement")}
@@ -1486,10 +1519,12 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
 
-        <WebDavSyncSection />
+        {activeTab === "data" && <WebDavSyncSection />}
 
         {/* Proxy config */}
+        {activeTab === "global" && (
         <section>
           <h2 className="app-section-title mb-3">
             {t("settings.proxyConfig")}
@@ -1522,8 +1557,10 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
 
         {/* SkillsMP API Key */}
+        {activeTab === "api" && (
         <section>
           <h2 className="app-section-title mb-3">
             {t("settings.skillsmpTitle", { defaultValue: "SkillsMP AI Search" })}
@@ -1566,8 +1603,10 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
 
         {/* ClawHub config */}
+        {activeTab === "api" && (
         <section>
           <h2 className="app-section-title mb-3">
             {t("settings.clawhubTitle", { defaultValue: "ClawHub" })}
@@ -1610,8 +1649,10 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Git sync config */}
+        {activeTab === "data" && (
         <section>
           <h2 className="app-section-title mb-3">
             {t("settings.gitSyncConfig")}
@@ -1644,8 +1685,10 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
 
         {/* About */}
+        {activeTab === "global" && (
         <section>
           <div className="app-panel flex flex-wrap items-start justify-between gap-3 p-4">
             <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -1731,6 +1774,7 @@ export function Settings() {
             </div>
           </div>
         </section>
+        )}
       </div>
     </div>
   );

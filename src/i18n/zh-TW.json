@@ -385,6 +385,12 @@
   },
   "settings": {
     "title": "設定",
+    "tabs": {
+      "global": "全域設定",
+      "agents": "Agent 設定",
+      "data": "資料管理",
+      "api": "API 管理"
+    },
     "supportedAgents": "支援的 Agent",
     "agentsSummary": "已偵測 {{detected}} 個，已啟用 {{enabled}} 個，自訂 {{custom}} 個",
     "detectedAgents": "已偵測",

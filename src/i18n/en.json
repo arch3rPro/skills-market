@@ -418,6 +418,12 @@
   },
   "settings": {
     "title": "Settings",
+    "tabs": {
+      "global": "Global Settings",
+      "agents": "Agent Settings",
+      "data": "Data Management",
+      "api": "API Management"
+    },
     "supportedAgents": "Supported Agents",
     "agentsSummary": "{{detected}} detected, {{enabled}} enabled, {{custom}} custom",
     "detectedAgents": "Detected",
