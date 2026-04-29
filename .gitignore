@@ -31,9 +31,11 @@ dist-ssr
 *.sln
 *.sw?
 .trae/*
+.codex/*
 .claude
 reference
 CLAUDE.md
 
 # reference
 reference
+
