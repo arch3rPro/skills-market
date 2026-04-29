@@ -60,6 +60,7 @@ export function WebDavSyncSection() {
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [busy, setBusy] = useState<BusyState>("loading");
   const [remoteInfo, setRemoteInfo] = useState<api.RemoteSnapshotInfo | null>(null);
+  const [presetId, setPresetId] = useState<PresetId>("custom");
 
   const actionButtonClass =
     "inline-flex h-8 items-center gap-1.5 rounded-[4px] border px-2.5 text-[13px] font-medium transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-60";
@@ -72,7 +73,11 @@ export function WebDavSyncSection() {
     let cancelled = false;
     api.webdavSyncGetSettings()
       .then((value) => {
-        if (!cancelled) setSettings(normalizeSettings(value));
+        if (!cancelled) {
+          const normalized = normalizeSettings(value);
+          setSettings(normalized);
+          setPresetId(selectedPreset(normalized.baseUrl));
+        }
       })
       .catch((error) => {
         if (!cancelled) toast.error(getErrorMessage(error));
@@ -109,7 +114,9 @@ export function WebDavSyncSection() {
 
   const handlePresetChange = (presetId: string) => {
     const preset = PRESETS.find((item) => item.id === presetId);
-    if (!preset || preset.id === "custom") return;
+    if (!preset) return;
+    setPresetId(preset.id);
+    if (preset.id === "custom") return;
     updateSettings({ baseUrl: preset.baseUrl });
   };
 
@@ -229,7 +236,7 @@ export function WebDavSyncSection() {
                 <label className="space-y-1.5">
                   <span className="text-[12px] text-muted">{t("settings.webdavSync.preset")}</span>
                   <CustomSelect
-                    value={selectedPreset(settings.baseUrl)}
+                    value={presetId}
                     onChange={handlePresetChange}
                     options={presetOptions}
                   />
@@ -239,7 +246,10 @@ export function WebDavSyncSection() {
                   <input
                     type="text"
                     value={settings.baseUrl}
-                    onChange={(event) => updateSettings({ baseUrl: event.target.value })}
+                    onChange={(event) => {
+                      setPresetId(selectedPreset(event.target.value));
+                      updateSettings({ baseUrl: event.target.value });
+                    }}
                     placeholder={t("settings.webdavSync.baseUrlPlaceholder")}
                     className={`${fieldClass} w-full font-mono`}
                   />
