@@ -1,6 +1,9 @@
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+
+pub mod archive;
 
 pub const WEBDAV_SETTINGS_KEY: &str = "webdav_sync_settings";
 pub const DEFAULT_REMOTE_ROOT: &str = "skills-manager-plus-sync";
@@ -92,6 +95,48 @@ pub struct ArtifactMeta {
     pub content_type: String,
 }
 
+pub fn validate_manifest_compat(
+    manifest: &SyncManifest,
+    local_db_compat_version: u32,
+) -> Result<()> {
+    if manifest.format != PROTOCOL_FORMAT {
+        bail!("Unsupported WebDAV sync manifest format");
+    }
+    if manifest.protocol_version != PROTOCOL_VERSION {
+        bail!("Unsupported WebDAV sync protocol version");
+    }
+    if manifest.app_id != "com.agentskills.skillsmanagerplus" {
+        bail!("Unsupported WebDAV sync app id");
+    }
+    if manifest.db_compat_version > local_db_compat_version {
+        bail!("WebDAV sync manifest requires a newer database version");
+    }
+    if !manifest.artifacts.contains_key(REMOTE_DATA_SQL) {
+        bail!("WebDAV sync manifest is missing data.sql");
+    }
+    if !manifest.artifacts.contains_key(REMOTE_SKILLS_ZIP) {
+        bail!("WebDAV sync manifest is missing skills.zip");
+    }
+    Ok(())
+}
+
+pub fn compute_snapshot_id(artifacts: &BTreeMap<String, ArtifactMeta>) -> String {
+    let mut hasher = Sha256::new();
+    for (name, artifact) in artifacts {
+        hasher.update(name.as_bytes());
+        hasher.update(b":");
+        hasher.update(artifact.sha256.as_bytes());
+        hasher.update(b"\n");
+    }
+    format!("{:x}", hasher.finalize())
+}
+
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    format!("{:x}", hasher.finalize())
+}
+
 pub fn resolve_password_for_save(
     mut incoming: WebDavSyncSettings,
     existing: Option<WebDavSyncSettings>,
@@ -136,6 +181,46 @@ fn validate_safe_remote_segment(name: &str, value: &str) -> Result<()> {
 mod tests {
     use super::*;
 
+    fn test_artifacts(data_hash: &str, skills_hash: &str) -> BTreeMap<String, ArtifactMeta> {
+        BTreeMap::from([
+            (
+                REMOTE_DATA_SQL.to_string(),
+                ArtifactMeta {
+                    sha256: data_hash.to_string(),
+                    size: 123,
+                    content_type: "application/sql".to_string(),
+                },
+            ),
+            (
+                REMOTE_SKILLS_ZIP.to_string(),
+                ArtifactMeta {
+                    sha256: skills_hash.to_string(),
+                    size: 456,
+                    content_type: "application/zip".to_string(),
+                },
+            ),
+        ])
+    }
+
+    fn test_manifest_with(
+        format: &str,
+        protocol_version: u32,
+        db_compat_version: u32,
+    ) -> SyncManifest {
+        SyncManifest {
+            format: format.to_string(),
+            protocol_version,
+            app_id: "com.agentskills.skillsmanagerplus".to_string(),
+            app_name: "Skills Manager Plus".to_string(),
+            app_version: "1.20.2".to_string(),
+            db_compat_version,
+            device_name: "test-device".to_string(),
+            created_at: "2026-04-29T00:00:00Z".to_string(),
+            snapshot_id: "snapshot".to_string(),
+            artifacts: test_artifacts("data-hash", "skills-hash"),
+        }
+    }
+
     #[test]
     fn settings_normalize_defaults_remote_root_and_profile() {
         let mut settings = WebDavSyncSettings {
@@ -150,7 +235,10 @@ mod tests {
 
         settings.normalize();
 
-        assert_eq!(settings.base_url, "https://dav.example.com/remote.php/dav/files/me/");
+        assert_eq!(
+            settings.base_url,
+            "https://dav.example.com/remote.php/dav/files/me/"
+        );
         assert_eq!(settings.username, "alice");
         assert_eq!(settings.remote_root, DEFAULT_REMOTE_ROOT);
         assert_eq!(settings.profile, DEFAULT_PROFILE);
@@ -204,5 +292,30 @@ mod tests {
         assert!(!redacted.contains("super-secret-password"));
         assert!(redacted.contains("https://dav.example.com"));
         assert!(redacted.contains("team-sync-root"));
+    }
+
+    #[test]
+    fn validate_manifest_rejects_wrong_format() {
+        let manifest = test_manifest_with("wrong-format", PROTOCOL_VERSION, 1);
+
+        assert!(validate_manifest_compat(&manifest, 1).is_err());
+    }
+
+    #[test]
+    fn validate_manifest_rejects_newer_db_version() {
+        let manifest = test_manifest_with(PROTOCOL_FORMAT, PROTOCOL_VERSION, 2);
+
+        assert!(validate_manifest_compat(&manifest, 1).is_err());
+    }
+
+    #[test]
+    fn snapshot_id_changes_with_artifact_hash() {
+        let original = test_artifacts("data-hash", "skills-hash");
+        let changed = test_artifacts("data-hash", "changed-skills-hash");
+
+        assert_ne!(
+            compute_snapshot_id(&original),
+            compute_snapshot_id(&changed)
+        );
     }
 }
