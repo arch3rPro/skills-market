@@ -32,6 +32,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { CustomSelect } from "../components/CustomSelect";
+import { WebDavSyncSection } from "../components/settings/WebDavSyncSection";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -1485,6 +1486,8 @@ export function Settings() {
             </div>
           </div>
         </section>
+
+        <WebDavSyncSection />
 
         {/* Proxy config */}
         <section>
