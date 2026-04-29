@@ -470,6 +470,13 @@ pub fn run() {
             commands::data_backup::restore_data_backup,
             commands::data_backup::rename_data_backup,
             commands::data_backup::delete_data_backup,
+            // WebDAV Sync
+            commands::webdav_sync::webdav_sync_get_settings,
+            commands::webdav_sync::webdav_sync_save_settings,
+            commands::webdav_sync::webdav_test_connection,
+            commands::webdav_sync::webdav_sync_fetch_remote_info,
+            commands::webdav_sync::webdav_sync_upload,
+            commands::webdav_sync::webdav_sync_download,
             // Git Backup
             commands::git_backup::git_backup_status,
             commands::git_backup::git_backup_init,

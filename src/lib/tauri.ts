@@ -514,6 +514,69 @@ export const renameDataBackup = (oldFilename: string, newName: string) =>
 export const deleteDataBackup = (filename: string) =>
   invoke<void>("delete_data_backup", { filename });
 
+// ── WebDAV Sync ──
+
+export interface WebDavSyncStatus {
+  lastSyncAt?: number | null;
+  lastError?: string | null;
+  lastErrorSource?: string | null;
+  lastLocalManifestHash?: string | null;
+  lastRemoteManifestHash?: string | null;
+  lastRemoteEtag?: string | null;
+}
+
+export interface WebDavSyncSettings {
+  enabled: boolean;
+  baseUrl: string;
+  username: string;
+  password?: string;
+  remoteRoot: string;
+  profile: string;
+  status?: WebDavSyncStatus;
+}
+
+export interface RemoteSnapshotInfo {
+  empty: boolean;
+  compatible: boolean;
+  deviceName?: string | null;
+  createdAt?: string | null;
+  protocolVersion?: number | null;
+  dbCompatVersion?: number | null;
+  snapshotId?: string | null;
+  remotePath?: string | null;
+  artifacts: string[];
+}
+
+export interface WebDavSyncResult {
+  status: string;
+  remotePath: string;
+  warning?: string | null;
+}
+
+export const webdavSyncGetSettings = () =>
+  invoke<WebDavSyncSettings | null>("webdav_sync_get_settings");
+
+export const webdavSyncSaveSettings = (
+  settings: WebDavSyncSettings,
+  passwordTouched: boolean,
+) =>
+  invoke<void>("webdav_sync_save_settings", { settings, passwordTouched });
+
+export const webdavTestConnection = (
+  settings: WebDavSyncSettings,
+  preserveEmptyPassword = true,
+) =>
+  invoke<void>("webdav_test_connection", { settings, preserveEmptyPassword });
+
+export const webdavSyncFetchRemoteInfo = () =>
+  invoke<RemoteSnapshotInfo>("webdav_sync_fetch_remote_info");
+
+export const webdavSyncUpload = () =>
+  invoke<WebDavSyncResult>("webdav_sync_upload");
+
+export const webdavSyncDownload = () =>
+  invoke<WebDavSyncResult>("webdav_sync_download");
+
 // ── Git Backup ──
 
 export interface GitBackupStatus {

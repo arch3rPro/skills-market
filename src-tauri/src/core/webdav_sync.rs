@@ -220,7 +220,7 @@ pub async fn upload_snapshot(
     let segments = remote_dir_segments(&normalized, db_compat);
     webdav::ensure_remote_directories(&normalized.base_url, &segments, auth.clone()).await?;
 
-    let snapshot = build_local_snapshot(store, db_compat)?;
+    let snapshot = tokio::task::block_in_place(|| build_local_snapshot(store, db_compat))?;
     let artifact_segments =
         artifact_upload_dir_segments(&normalized, db_compat, &snapshot.upload_id);
     webdav::ensure_remote_directories(&normalized.base_url, &artifact_segments, auth.clone())
@@ -259,7 +259,7 @@ pub async fn upload_snapshot(
     normalized.status.last_local_manifest_hash = Some(snapshot.manifest_hash.clone());
     normalized.status.last_remote_manifest_hash = Some(snapshot.manifest_hash);
     normalized.status.last_remote_etag = etag;
-    save_settings(store, normalized.clone())?;
+    tokio::task::block_in_place(|| save_settings(store, normalized.clone()))?;
     *settings = normalized;
 
     Ok(WebDavSyncResult {
@@ -297,7 +297,7 @@ pub async fn download_snapshot(
         &remote.manifest,
     )
     .await?;
-    apply_snapshot(store, &data_sql, &skills_zip)?;
+    tokio::task::block_in_place(|| apply_snapshot(store, &data_sql, &skills_zip))?;
 
     let manifest_hash = sha256_hex(&remote.manifest_bytes);
     normalized.status.last_sync_at = Some(Utc::now().timestamp());
@@ -306,7 +306,7 @@ pub async fn download_snapshot(
     normalized.status.last_local_manifest_hash = Some(manifest_hash.clone());
     normalized.status.last_remote_manifest_hash = Some(manifest_hash);
     normalized.status.last_remote_etag = remote.manifest_etag;
-    save_settings(store, normalized.clone())?;
+    tokio::task::block_in_place(|| save_settings(store, normalized.clone()))?;
     *settings = normalized;
 
     Ok(WebDavSyncResult {
