@@ -1,6 +1,7 @@
 use super::{
     crypto, migrations,
     skill_store::{SkillStore, SENSITIVE_KEYS},
+    webdav_sync::{redact_settings_for_export, WEBDAV_SETTINGS_KEY},
 };
 use anyhow::{bail, Context, Result};
 use chrono::{Local, Utc};
@@ -291,12 +292,15 @@ fn dump_sql(conn: &Connection, secret_key: Option<&[u8; 32]>) -> Result<String> 
                     let key: String = row.get(settings_key_idx.unwrap())?;
                     if SENSITIVE_KEYS.contains(&key.as_str()) {
                         let raw_value: String = row.get(idx)?;
-                        let export_value = match secret_key {
+                        let mut export_value = match secret_key {
                             Some(secret_key) if crypto::is_encrypted(&raw_value) => {
                                 crypto::decrypt(secret_key, &raw_value)?
                             }
                             _ => raw_value,
                         };
+                        if key == WEBDAV_SETTINGS_KEY {
+                            export_value = redact_settings_for_export(&export_value);
+                        }
                         values.push(format_sql_text(&export_value));
                         continue;
                     }
@@ -388,6 +392,7 @@ fn backup_id_from_path(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::core::webdav_sync::{WebDavSyncSettings, WEBDAV_SETTINGS_KEY};
     use crate::core::skill_store::SkillStore;
 
     fn test_store(name: &str) -> (tempfile::TempDir, SkillStore) {
@@ -462,6 +467,32 @@ mod tests {
                 .as_deref(),
             Some("git@example.com:user/repo.git")
         );
+    }
+
+    #[test]
+    fn export_sql_redacts_webdav_password_but_keeps_non_secret_config() {
+        let (_dir, store) = test_store("webdav-redacted");
+        let settings = WebDavSyncSettings {
+            enabled: true,
+            base_url: "https://dav.example.com/remote.php/dav/files/alice".to_string(),
+            username: "alice".to_string(),
+            password: "super-secret-password".to_string(),
+            remote_root: "team-sync-root".to_string(),
+            profile: "default".to_string(),
+            status: Default::default(),
+        };
+        store
+            .set_setting(
+                WEBDAV_SETTINGS_KEY,
+                &serde_json::to_string(&settings).unwrap(),
+            )
+            .unwrap();
+
+        let sql = store.export_data_sql_string().unwrap();
+
+        assert!(!sql.contains("super-secret-password"));
+        assert!(sql.contains("https://dav.example.com/remote.php/dav/files/alice"));
+        assert!(sql.contains("team-sync-root"));
     }
 
     #[test]
