@@ -18,6 +18,7 @@
 - SkillsMP API key
 - ClawHub API key
 - Git backup remote configuration
+- WebDAV cloud sync configuration
 - App update checks
 
 ## Custom Agents
@@ -38,6 +39,23 @@ You can configure:
 - `SkillsMP API key` for AI-powered marketplace search
 - `ClawHub API key` for ClawHub integration
 - `proxy` for Git and network requests when needed
+
+### WebDAV Cloud Sync
+
+`WebDAV Cloud Sync` uploads and downloads a full app-state snapshot through a WebDAV-compatible storage service.
+
+The snapshot includes a SQLite metadata export and an archive of the central Skills directory. It is useful when you want multi-device sync without maintaining a Git remote.
+
+Uploading overwrites the remote snapshot. Downloading overwrites local app data after the app creates safety backups, so review the remote metadata before restoring.
+
+First-time flow:
+
+1. Choose a provider preset.
+2. Enter the WebDAV URL, username, and app password.
+3. Test the connection.
+4. Save the configuration.
+5. Upload from the source device.
+6. On the target device, review the remote metadata, then download.
 
 ## Best Practice
 
